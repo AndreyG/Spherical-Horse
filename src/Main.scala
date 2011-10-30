@@ -1,6 +1,9 @@
-import scala.swing._
-import scala.swing.event.{Key, KeyPressed, KeyReleased}
-import java.awt.{Color, Dimension}
+import scala.swing.{Label, SimpleSwingApplication, TextArea}
+import scala.swing.event.Key
+import java.awt.Color
+
+import gui.{MainFrame, Editor, Field, StatusLine}
+import core.{Interpretator, AST, State}
 
 object Main extends SimpleSwingApplication {
 
@@ -13,76 +16,58 @@ object Main extends SimpleSwingApplication {
     val rows = 10
     val cols = 10
     val state = new State(rows, cols)
-    val editor = new Editor(() => mode == Mode.Editing, switchMode, processKey)
+    val editor = new Editor(switchMode)
     val field = new Field(rows, cols, state)
+    var interpretator = new Interpretator(AST.Empty)
 
     val modeLine = new Label {
         background = Color.lightGray
 
         def setMode(mode: Mode.Value) = mode match {
-            case Mode.Editing => text = "editing"
+            case Mode.Editing   => text = "editing"
             case Mode.Executing => text = "executing"
         }
-
-        setMode(mode)
     }
 
-    val statusLine = new Label {
-        background = Color.lightGray
-        
-        def raiseError() {
-            foreground = Color.red
-            text = "impossible!"
-        }
+    val helpText = new TextArea {
+        editable = false
 
-        def removeError() {
-            text = ""
-        }
+        peer.setTabSize(3)
     }
 
-    def processKey(key: Key.Value): Unit = key match {
-        case Key.S => {
-           if (state(Step)) {
-               field.repaint()
-               statusLine.removeError()
-           } else {
-              statusLine.raiseError()
-           }
+    val frame = new MainFrame(editor, field, modeLine, helpText, 
+        key => mode match {
+            case Mode.Executing => processKey(key)
+            case Mode.Editing   => editor.processKey(key)
         }
-        case Key.J => {
-           if (state(Jump)) {
-               field.repaint()
-               statusLine.removeError()
-           } else {
-              statusLine.raiseError()
-           }
-        }
-        case Key.L => {
-            state(TurnLeft)
-            field.repaint()  
-            statusLine.removeError()
-        }
-        case Key.R => {
-            state(TurnRight)
+    )
+
+    private def move(op: core.operator.SimpleOperator) {
+        if (state(op)) {
             field.repaint()
-            statusLine.removeError()
+            StatusLine.removeError()
+        } else {
+            StatusLine.raiseError()
         }
+    }
+
+    import core.operator.{Step, Jump, TurnLeft, TurnRight}
+
+    private def processKey(key: Key.Value) = key match {
+        case Key.S => move(Step)
+        case Key.J => move(Jump)
+        case Key.L => move(TurnLeft)
+        case Key.R => move(TurnRight)
         case Key.Escape => state.reset(); field.repaint()
         case Key.F9 => {
             val res = interpretator.exec(state)
             field.repaint()
             if (res == Interpretator.ReturnCode.error)
-                statusLine.raiseError()
+                StatusLine.raiseError()
         }
-        case Key.E => {
-            editor.prepare()
-            switchMode()
-        }
-
+        case Key.E => switchMode()
         case _ => ()
     }
-
-    var interpretator = new Interpretator(AST.Empty)
 
     val help = Map (
         Mode.Executing -> List (
@@ -107,12 +92,6 @@ object Main extends SimpleSwingApplication {
         )
     )
 
-    val helpText = new TextArea {
-        editable = false
-
-        peer.setTabSize(3)
-    }
-
     def updateHelpText(keybindings: List[(String, String)]) {
         val sb = new StringBuilder
         for ((key, command) <- keybindings) {
@@ -125,53 +104,15 @@ object Main extends SimpleSwingApplication {
         mode = Mode(1 - mode.id)
         modeLine.setMode(mode)
         if (mode == Mode.Executing) {
-            interpretator = new Interpretator(editor.buildAST)
+            interpretator = new Interpretator(AST.build(editor.getOperators))
+        } else {
+            editor.prepare()
         }
         updateHelpText(help(mode))
     }
 
     updateHelpText(help(mode))
+    modeLine.setMode(mode)
 
-    override def top = new MainFrame {
-        title = "Shperical Horse"
-        
-        val height = 600
-        val fieldWidth = height
-        val editorWidth = 400
-
-        contents = {
-            val panel = new BoxPanel(Orientation.Horizontal)
-            val editorPanel = new BoxPanel(Orientation.Vertical)
-
-            val labelPanel = new BorderPanel {
-                add(modeLine, BorderPanel.Position.West)
-                add(statusLine, BorderPanel.Position.East)
-            }
-
-            labelPanel.minimumSize = new Dimension(editorWidth, 15)
-            labelPanel.maximumSize = new Dimension(editorWidth, 15)
-
-            helpText.minimumSize = new Dimension(editorWidth, 150)
-            helpText.maximumSize = new Dimension(editorWidth, 150)
-
-            editorPanel.contents += helpText
-            editorPanel.contents += editor
-            editorPanel.contents += labelPanel
-
-            editorPanel.minimumSize = new Dimension(editorWidth, height)
-            editorPanel.maximumSize = new Dimension(editorWidth, height)
-
-            field.minimumSize = new Dimension(fieldWidth, height)
-            field.maximumSize = new Dimension(fieldWidth, height)
-
-            panel.contents += editorPanel
-            panel.contents += field
-            panel
-        }
-
-        size = new Dimension(editorWidth + fieldWidth, height)
-        resizable = false
-
-        editor.requestFocus()
-    }
+    override def top = frame 
 }

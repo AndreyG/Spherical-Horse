@@ -1,3 +1,5 @@
+package core
+
 import scala.collection.mutable.{Buffer, ArrayBuffer}
 
 object State {
@@ -7,6 +9,8 @@ object State {
 
     class Pos(var x: Int, var y: Int)
 }
+
+import operator._
 
 class State(width: Int, height: Int) {
     import State.Direction._

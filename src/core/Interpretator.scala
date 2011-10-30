@@ -1,23 +1,13 @@
+package core
+
 import scala.collection.mutable.Stack
-
-abstract class AST 
-
-object AST {
-    case object Empty extends AST 
-    sealed case class SeqAST(operator: SimpleOperator, tail: AST) extends AST
-
-    abstract class ConditionalAST extends AST
-    sealed case class IfAST(c: Condition.Value, body: AST, tail: AST) extends ConditionalAST
-    sealed case class IfElseAST(c: Condition.Value, trueBranch: AST, falseBranch: AST, tail: AST) extends ConditionalAST 
-    sealed case class WhileAST(c: Condition.Value, body: AST, tail: AST) extends ConditionalAST
-}
 
 object Interpretator {
     object ReturnCode extends Enumeration {
         val success, error, continue = Value
     }
 }
-     
+
 class Interpretator(ast: AST) {
     import AST._
     import Interpretator.ReturnCode
@@ -26,7 +16,7 @@ class Interpretator(ast: AST) {
     private[this] val stack: Stack[ConditionalAST] = new Stack
 
     def step(state: State): ReturnCode.Value = current match {
-        case Empty => {
+        case Empty => 
             if (stack.isEmpty) {
                 ReturnCode.success
             } else {
@@ -53,15 +43,13 @@ class Interpretator(ast: AST) {
                     }
                 }
             }
-        }
-        case SeqAST(operator: SimpleOperator, tail: AST) => {
+        case SeqAST(operator, tail) => 
             if (state(operator)) {
                 current = tail
                 ReturnCode.continue
             } else {
                 ReturnCode.error
             }
-        }
         case IfAST(c, body, tail) => {
             if (state(c)) {
                 stack.push(current.asInstanceOf[IfAST])
@@ -100,6 +88,6 @@ class Interpretator(ast: AST) {
                 return r
             }
         }
-        error("The End of Infinity")
+        sys.error("The End of Infinity")
     }
 }

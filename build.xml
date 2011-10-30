@@ -14,6 +14,8 @@
              destdir="build"
              classpathref="build.classpath"
              classpath="build"
+             deprecation="yes"
+             unchecked="yes"
         />
     </target>
 

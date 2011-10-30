@@ -1,9 +1,13 @@
+package gui
+
 import scala.swing.Component
 import java.io.File
 import java.awt.geom.Line2D.{Double => Line}
 import java.awt.{Color, Graphics2D, BasicStroke}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+
+import core.State
 
 class Field(rowsNum: Int, colsNum: Int, state: State) extends Component {
     import State.Direction._
