@@ -1,0 +1,33 @@
+<project name="spherical-horse" default="build">
+    <path id="build.classpath">
+         <pathelement location="deploy/scala-compiler.jar"/>
+         <pathelement location="deploy/scala-library.jar"/>
+         <pathelement location="deploy/scala-swing.jar"/>
+    </path>
+
+    <taskdef name="scalac" classname="scala.tools.ant.Scalac" classpathref="build.classpath"/>
+
+    <target name="compile">
+        <mkdir dir="build"/>
+        <scalac
+             srcdir="src"
+             destdir="build"
+             classpathref="build.classpath"
+             classpath="build"
+        />
+    </target>
+
+    <target name="build" depends="compile">
+        <jar
+            destfile="deploy/horse.jar"
+            basedir="build"
+        />
+    </target>
+
+    <target name="clean">
+        <delete quiet="true" includeEmptyDirs="true">
+            <fileset dir="build"/>
+            <fileset file="deploy/horse.jar"/>
+        </delete>
+    </target>
+</project>
