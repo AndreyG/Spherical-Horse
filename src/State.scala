@@ -1,6 +1,6 @@
 import scala.collection.mutable.{Buffer, ArrayBuffer}
 
-object StateMachine {
+object State {
     object Direction extends Enumeration {
         val North, East, South, West = Value
     }
@@ -8,9 +8,9 @@ object StateMachine {
     class Pos(var x: Int, var y: Int)
 }
 
-class StateMachine(width: Int, height: Int) {
-    import StateMachine.Direction._
-    import StateMachine.Pos 
+class State(width: Int, height: Int) {
+    import State.Direction._
+    import State.Pos 
 
     var pos = new Pos(0, height - 1)
     var direction = North
@@ -59,11 +59,11 @@ class StateMachine(width: Int, height: Int) {
                 false
         }
         case TurnLeft => {
-            direction = StateMachine.Direction((direction.id + 3) % 4)
+            direction = State.Direction((direction.id + 3) % 4)
             true
         }
         case TurnRight => {
-            direction = StateMachine.Direction((direction.id + 1) % 4)
+            direction = State.Direction((direction.id + 1) % 4)
             true
         }
     }

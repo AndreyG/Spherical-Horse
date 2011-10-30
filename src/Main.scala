@@ -12,7 +12,7 @@ object Main extends SimpleSwingApplication {
 
     val rows = 10
     val cols = 10
-    val state = new StateMachine(rows, cols)
+    val state = new State(rows, cols)
     val editor = new Editor(() => mode == Mode.Editing, switchMode, processKey)
     val field = new Field(rows, cols, state)
 

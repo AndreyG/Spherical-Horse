@@ -25,7 +25,7 @@ class Interpretator(ast: AST) {
     private[this] var current = ast
     private[this] val stack: Stack[ConditionalAST] = new Stack
 
-    def step(state: StateMachine): ReturnCode.Value = current match {
+    def step(state: State): ReturnCode.Value = current match {
         case Empty => {
             if (stack.isEmpty) {
                 ReturnCode.success
@@ -91,7 +91,7 @@ class Interpretator(ast: AST) {
         }
     }
 
-    def exec(state: StateMachine): ReturnCode.Value = {
+    def exec(state: State): ReturnCode.Value = {
         while (true) {
             val r = step(state)
             if (r != ReturnCode.continue) {

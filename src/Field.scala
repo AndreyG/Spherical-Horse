@@ -5,8 +5,8 @@ import java.awt.{Color, Graphics2D, BasicStroke}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
-class Field(rowsNum: Int, colsNum: Int, state: StateMachine) extends Component {
-    import StateMachine.Direction._
+class Field(rowsNum: Int, colsNum: Int, state: State) extends Component {
+    import State.Direction._
 
     private[this] val horse = Map(
         North -> "north",
