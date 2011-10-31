@@ -17,10 +17,12 @@ class Editor(switchMode: () => Unit) extends ListView[Operator] {
     selection.intervalMode = ListView.IntervalMode.Single 
     enabled = false
 
-    private[this] var prevLines: List[Operator] = List()
-    private[this] var nextLines: List[Operator] = List()
+    private[this] var prevLines: List[Operator] = List(ProgramBegin)
+    private[this] var nextLines: List[Operator] = List(ProgramEnd)
 
-    private[this] var currentLine = -1
+    private[this] var currentLine = 0
+
+    updateView()
     
     private def up() {
         nextLines = prevLines.head :: nextLines
@@ -56,7 +58,7 @@ class Editor(switchMode: () => Unit) extends ListView[Operator] {
             if (prevLines.size > 1) 
                 up()
         case Key.Down => 
-            if (!nextLines.isEmpty)
+            if (nextLines.size > 1)
                 down()
         case Key.S => addLine(Step)
         case Key.J => addLine(Jump)

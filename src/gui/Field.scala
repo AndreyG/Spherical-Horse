@@ -7,10 +7,10 @@ import java.awt.{Color, Graphics2D, BasicStroke}
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
-import core.State
+import core.{FieldState => State}
 
 class Field(rowsNum: Int, colsNum: Int, state: State) extends Component {
-    import State.Direction._
+    import core.HorseState.Direction._
 
     private[this] val horse = Map(
         North -> "north",

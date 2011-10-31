@@ -3,7 +3,7 @@ import scala.swing.event.Key
 import java.awt.Color
 
 import gui.{MainFrame, Editor, Field, StatusLine}
-import core.{Interpretator, AST, State}
+import core.{Interpretator, FieldState}
 
 object Main extends SimpleSwingApplication {
 
@@ -15,10 +15,10 @@ object Main extends SimpleSwingApplication {
 
     val rows = 10
     val cols = 10
-    val state = new State(rows, cols)
+    val state = new FieldState(rows, cols)
     val editor = new Editor(switchMode)
     val field = new Field(rows, cols, state)
-    var interpretator = new Interpretator(AST.Empty)
+    var interpretator = new Interpretator(editor.getOperators)
 
     val modeLine = new Label {
         background = Color.lightGray
@@ -60,10 +60,7 @@ object Main extends SimpleSwingApplication {
         case Key.R => move(TurnRight)
         case Key.Escape => state.reset(); field.repaint()
         case Key.F9 => {
-            val res = interpretator.exec(state)
-            field.repaint()
-            if (res == Interpretator.ReturnCode.error)
-                StatusLine.raiseError()
+            interpretator.run(state); field.repaint()
         }
         case Key.E => switchMode()
         case _ => ()
@@ -104,7 +101,7 @@ object Main extends SimpleSwingApplication {
         mode = Mode(1 - mode.id)
         modeLine.setMode(mode)
         if (mode == Mode.Executing) {
-            interpretator = new Interpretator(AST.build(editor.getOperators))
+            interpretator = new Interpretator(editor.getOperators)
         } else {
             editor.prepare()
         }

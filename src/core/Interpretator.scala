@@ -3,91 +3,97 @@ package core
 import scala.collection.mutable.Stack
 
 object Interpretator {
-    object ReturnCode extends Enumeration {
-        val success, error, continue = Value
+    object Result extends Enumeration {
+        val Success, Crash, InfiniteLoop = Value
     }
 }
 
-class Interpretator(ast: AST) {
-    import AST._
-    import Interpretator.ReturnCode
+class Interpretator(operators: List[operator.Operator]) {
+    import Program._
+    import Interpretator.Result._
+    type ResultType = Interpretator.Result.Value 
 
-    private[this] var current = ast
-    private[this] val stack: Stack[ConditionalAST] = new Stack
+    def isStopped = current.isInstanceOf[TerminalState]
 
-    def step(state: State): ReturnCode.Value = current match {
-        case Empty => 
-            if (stack.isEmpty) {
-                ReturnCode.success
-            } else {
-                stack.top match {
-                    case IfAST(_, _, tail) => {
-                        stack.pop()
-                        current = tail
-                        step(state)
-                    }
-                    case IfElseAST(_, _, _, tail) => {
-                        stack.pop()
-                        current = tail
-                        step(state)
-                    }
-                    case WhileAST(c, body, tail) => {
-                        if (state(c)) {
-                            current = body
-                            step(state)
-                        } else {
-                            stack.pop()
-                            current = tail
-                            step(state)
-                        }
-                    }
+    def step(field: FieldState): Boolean = {
+        val res = current match {
+            case SimpleState(operator, _, _) => field(operator)
+            case _ => true
+        }
+        current match {
+            case StartState(next) => current = next
+            case EndState(_) => {
+                val st = stack.top
+                st match {
+                    case st: IfState        => stack.pop(); current = st.next
+                    case st: IfElseState    => stack.pop(); current = st.next
+                    case st: WhileState     => current = st
                 }
             }
-        case SeqAST(operator, tail) => 
-            if (state(operator)) {
-                current = tail
-                ReturnCode.continue
-            } else {
-                ReturnCode.error
+            case SimpleState(_, _, next) => if (res) current = next 
+            case IfState(c, _, body, next) => {
+                if (field(c)) {
+                    stack.push(current.asInstanceOf[IfState])
+                    current = body
+                } else {
+                    current = next
+                }
             }
-        case IfAST(c, body, tail) => {
-            if (state(c)) {
-                stack.push(current.asInstanceOf[IfAST])
-                current = body
-            } else {
-                current = tail
+            case IfElseState(c, _, trueBranch, falseBranch, _) => {
+                stack.push(current.asInstanceOf[IfElseState])
+                if (field(c)) {
+                    current = trueBranch
+                } else {
+                    current = falseBranch
+                }
             }
-            step(state)
+            case WhileState(c, _, body, next) => {
+                if (field(c)) {
+                    stack.push(current.asInstanceOf[WhileState])
+                    current = body
+                } else {
+                    current = next
+                }
+            }
         }
-        case IfElseAST(c, trueBranch, falseBranch, _) => {
-            stack.push(current.asInstanceOf[IfElseAST])
-            if (state(c)) {
-                current = trueBranch
+        res
+    }
+
+    def currentLine = current.line
+
+    def run(field: FieldState): ResultType = {
+        var cycles = {
+            for ((op, i) <- operators.zip(0 until operators.size); if op.isInstanceOf[operator.While]) 
+                yield (i, 0)
+        }.toMap
+
+        while (!isStopped) {
+            if (step(field)) {
+                cycles.get(current.line) match {
+                    case Some(iter) => {
+                        if (iter == 1000)
+                            return InfiniteLoop
+                        else 
+                            cycles = cycles.updated(current.line, iter + 1)
+                    }
+                    case _ => ()
+                }
             } else {
-                current = falseBranch
+                return Crash
             }
-            step(state)
         }
-        case WhileAST(c, body, tail) => {
-            if (state(c)) {
-                stack.push(current.asInstanceOf[WhileAST])
-                current = body
-            } else {
-                current = tail
-            }
-            step(state)
+        return Success
+    }
+
+    private[this] val start = {
+        buildState(operators.zip(0 until operators.size)) match {
+            case (state, List()) => state
+            case _ => sys.error("build tree error")
         }
     }
 
-    def exec(state: State): ReturnCode.Value = {
-        while (true) {
-            val r = step(state)
-            if (r != ReturnCode.continue) {
-                stack.clear()
-                current = ast
-                return r
-            }
-        }
-        sys.error("The End of Infinity")
-    }
+    private[this] var current = start
+
+    private[this] val stack: Stack[ConditionalState] = new Stack
+
 }

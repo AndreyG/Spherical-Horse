@@ -2,7 +2,7 @@ package core
 
 import scala.collection.mutable.{Buffer, ArrayBuffer}
 
-object State {
+object HorseState {
     object Direction extends Enumeration {
         val North, East, South, West = Value
     }
@@ -12,9 +12,9 @@ object State {
 
 import operator._
 
-class State(width: Int, height: Int) {
-    import State.Direction._
-    import State.Pos 
+class FieldState(width: Int, height: Int) {
+    import HorseState.Direction._
+    import HorseState.Pos 
 
     var pos = new Pos(0, height - 1)
     var direction = North
@@ -63,11 +63,11 @@ class State(width: Int, height: Int) {
                 false
         }
         case TurnLeft => {
-            direction = State.Direction((direction.id + 3) % 4)
+            direction = HorseState.Direction((direction.id + 3) % 4)
             true
         }
         case TurnRight => {
-            direction = State.Direction((direction.id + 1) % 4)
+            direction = HorseState.Direction((direction.id + 1) % 4)
             true
         }
     }
