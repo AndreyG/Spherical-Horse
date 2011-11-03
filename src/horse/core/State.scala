@@ -1,4 +1,4 @@
-package core
+package horse.core
 
 import scala.collection.mutable.{Buffer, ArrayBuffer}
 

@@ -1,4 +1,4 @@
-package core.operator
+package horse.core.operator
 
 abstract class Operator 
 

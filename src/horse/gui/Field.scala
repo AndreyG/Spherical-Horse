@@ -1,18 +1,17 @@
-package gui
+package horse.gui
 
 import scala.swing.Component
 import java.io.File
 import java.awt.geom.Line2D.{Double => Line}
-import java.awt.{Color, Graphics2D, BasicStroke}
-import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
-import core.{FieldState => State}
+import horse.core.{FieldState => State, HorseState}
+import horse.core.HorseState.Direction._
+import java.awt.{Image, Color, Graphics2D, BasicStroke}
 
 class Field(rowsNum: Int, colsNum: Int, state: State) extends Component {
-    import core.HorseState.Direction._
 
-    private[this] val horse = Map(
+    private[this] val horse: Map[HorseState.Direction.Value, Image] = Map(
         North -> "north",
         East -> "east",
         South -> "south",

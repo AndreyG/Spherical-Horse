@@ -1,4 +1,4 @@
-package gui
+package horse.gui
 
 import scala.swing.Label
 import java.awt.Color

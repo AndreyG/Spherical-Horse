@@ -1,17 +1,17 @@
-package core
+package horse.core
 
 import scala.collection.mutable.Stack
 
-object Interpretator {
+object Interpreter {
     object Result extends Enumeration {
         val Success, Crash, InfiniteLoop = Value
     }
 }
 
-class Interpretator(operators: List[operator.Operator]) {
+class Interpreter(operators: IndexedSeq[operator.Operator]) {
     import Program._
-    import Interpretator.Result._
-    type ResultType = Interpretator.Result.Value 
+    import Interpreter.Result._
+    type ResultType = Interpreter.Result.Value
 
     def isStopped = current.isInstanceOf[TerminalState]
 
@@ -21,6 +21,7 @@ class Interpretator(operators: List[operator.Operator]) {
             case _ => true
         }
         current match {
+            case TerminalState(_) => ()
             case StartState(next) => current = next
             case EndState(_) => {
                 val st = stack.top
@@ -62,10 +63,7 @@ class Interpretator(operators: List[operator.Operator]) {
     def currentLine = current.line
 
     def run(field: FieldState): ResultType = {
-        var cycles = {
-            for ((op, i) <- operators.zip(0 until operators.size); if op.isInstanceOf[operator.While]) 
-                yield (i, 0)
-        }.toMap
+        var cycles = operators.filter(_.isInstanceOf[operator.While]).zipWithIndex.map(elem => (elem._2, 0)).toMap 
 
         while (!isStopped) {
             if (step(field)) {
@@ -82,16 +80,14 @@ class Interpretator(operators: List[operator.Operator]) {
                 return Crash
             }
         }
-        return Success
+        Success
     }
 
-    private[this] val start = {
-        buildState(operators.zip(0 until operators.size)) match {
-            case (state, List()) => state
-            case _ => sys.error("build tree error")
-        }
+    def restart() {
+        current = start
     }
 
+    private[this] val start = buildState(operators)
     private[this] var current = start
 
     private[this] val stack: Stack[ConditionalState] = new Stack
