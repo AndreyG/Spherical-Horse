@@ -52,10 +52,12 @@ object Editor extends EditorPane {
 
     def inverse() {
         def replaceOp(op: Operator) {
-            document.remove(currentLine)
             lines.remove(currentLine)
-            document.insert(op, indents(currentLine), currentLine)
+            document.remove(currentLine)
             lines.insert(currentLine, op)
+            document.insert(op, indents(currentLine), currentLine)
+
+            document.setBackground(currentLine, Document.Background.Selected)
         }
         lines(currentLine) match {
             case If(c)      => replaceOp(If   (Condition.not(c)))
@@ -65,7 +67,6 @@ object Editor extends EditorPane {
     }
 
     def prepare() { 
-        requestFocus()
         moveCurrentLine(0) 
     }
 
@@ -111,54 +112,46 @@ object Editor extends EditorPane {
             document.remove(i)
         }
 
-        def shift(i: Int) {
-            indents(i) = indents(i) - 1
-            document.shift(i)
+        def findCorrespondingOperator(delta: Int) = {
+            var i = currentLine + delta
+            while (indents(i) != indents(currentLine)) {
+                indents(i) = indents(i) - 1
+                document.shift(i)
+                i += delta
+            }
+            i
         }
 
         if (currentLine != 0) {
             lines(currentLine) match {
-                case _: SimpleOperator => remove(currentLine) 
+                case _: SimpleOperator => {
+                    remove(currentLine) 
+                }
                 case If(c) => {
-                    var i = currentLine + 1
-                    while (indents(i) != indents(currentLine)) {
-                        shift(i)
-                        i += 1
-                    }
+                    val i = findCorrespondingOperator(1)
+
+                    val toInsert = lines(i) == Else
+                    
                     remove(currentLine)
-                    i -= 1
-                    val toInsert = lines(i) == End 
-                    remove(i)
+                    remove(i - 1)
                     if (toInsert) {
-                        insert(If(Condition.not(c)), indents(currentLine), i)
+                        insert(If(Condition.not(c)), indents(currentLine), i - 1)
                     }                         
                 }
                 case Else => {
-                    var i = currentLine + 1
-                    while (indents(i) != indents(currentLine)) {
-                        shift(i)
-                        i += 1
-                    }
+                    val i = findCorrespondingOperator(1)
                     val indent = indents(currentLine)
                     remove(currentLine)
                     remove(i - 1)
                     insert(End, indent, currentLine)
                 }
                 case While(_) => {
-                    var i = currentLine + 1
-                    while (indents(i) != indents(currentLine)) {
-                        shift(i)
-                        i += 1
-                    }
+                    val i = findCorrespondingOperator(1)
                     remove(currentLine)
                     remove(i - 1)
                 }
                 case End => {
-                    var i = currentLine - 1
-                    while (indents(i) != indents(currentLine)) {
-                        shift(i)
-                        i -= 1
-                    }
+                    val i = findCorrespondingOperator(-1)
 
                     val indent = indents(i)
                     val toInsert = lines(i) == Else
@@ -247,11 +240,11 @@ object Editor extends EditorPane {
     fillDocument()
     document.setBackground(0, Background.Selected)
 
-    listenTo(keys)
 
+    listenTo(keys)
     reactions += {
         case KeyPressed(_, Key.Up,      _, _) => up()
         case KeyPressed(_, Key.Down,    _, _) => down()
         case KeyPressed(_, Key.Delete,  _, _) => deleteOperator()
-    }
+    } 
 }

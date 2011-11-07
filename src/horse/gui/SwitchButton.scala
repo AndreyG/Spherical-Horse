@@ -27,8 +27,8 @@ class SwitchButton( frame: Frame, executeMenu: MenuBar, editMenu: MenuBar,
         self.action = toEdit
         self.mnemonic = Key.Q
 
-        executeMenu.requestFocus()
-
         onExecute
     }
+
+    focusable = false
 }
