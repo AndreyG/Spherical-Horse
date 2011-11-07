@@ -5,14 +5,16 @@ import swing._
 
 import horse.Config
 
-class MainFrame(editor: Component, field: Component, button: Component)
-    extends scala.swing.MainFrame {
+class MainFrame(field: Component, executeMenu: MenuBar, editMenu: MenuBar,
+                onEdit: => Unit, onExecute: => Unit) extends scala.swing.MainFrame {
 
     title = "Shperical Horse"
 
     private[this] val editorWidth   = Config.getInt("editor.width")
     private[this] val fieldWidth    = Config.getInt("field.width")
     private[this] val height        = Config.getInt("field.height")
+
+    private[this] val button = new SwitchButton(this, executeMenu, editMenu, onEdit, onExecute)
 
     contents = new BoxPanel(Orientation.Horizontal) {
         import BorderPanel.Position._
@@ -22,7 +24,7 @@ class MainFrame(editor: Component, field: Component, button: Component)
             add(
                 new ScrollPane(
                     new BorderPanel {
-                        add(editor, Center)
+                        add(Editor, Center)
                     }) {
                         horizontalScrollBarPolicy = ScrollPane.BarPolicy.AsNeeded
                     },
@@ -42,8 +44,5 @@ class MainFrame(editor: Component, field: Component, button: Component)
     size = new Dimension(editorWidth + fieldWidth, height)
     resizable = false
 
-    def setMenuBar(bar: MenuBar) {
-        menuBar = bar
-        peer.validate()
-    }
+    button.toExecute()
 }

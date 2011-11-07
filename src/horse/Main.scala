@@ -22,34 +22,6 @@ object Main extends SimpleSwingApplication {
     val field = new Field(rows, cols, state)
     var interpreter = new Interpreter(Editor.program)
 
-    val switchToEdit: Action = Action("Edit") {
-        frame.setMenuBar(editMenu)
-        editMenu.enabled = true
-        executeMenu.enabled = false
-
-        switchButton.action = switchToExecute
-        switchButton.mnemonic = Key.Q
-
-        Editor.prepare()
-    }
-
-    val switchToExecute: Action = Action("Execute") {
-        frame.setMenuBar(executeMenu)
-        executeMenu.enabled = true
-        editMenu.enabled = false
-        
-        switchButton.action = switchToEdit
-        switchButton.mnemonic = Key.Q
-
-        executeMenu.requestFocus()
-        interpreter = new Interpreter(Editor.program)
-        Editor.highlightOperator(interpreter.currentLine, Editor.ProgramState.Normal)
-    }
-
-    val switchButton = new Button
-
-    val frame = new MainFrame(Editor, field, switchButton)
-
     import gui.MenuUtils._
 
     val fileChooser = new FileChooser(new File("progs"))
@@ -125,7 +97,8 @@ object Main extends SimpleSwingApplication {
         )
     }
 
-    switchToExecute()
-
-    override def top = frame
+    override def top = new MainFrame(field, executeMenu, editMenu, Editor.prepare(), {
+        interpreter = new Interpreter(Editor.program)
+        Editor.highlightOperator(interpreter.currentLine, Editor.ProgramState.Normal)
+    })
 }
