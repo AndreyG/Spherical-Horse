@@ -3,11 +3,10 @@ package horse.gui
 import scala.collection.mutable.ArrayBuffer
 import scala.swing.event.{KeyPressed, Key}
 import scala.swing.EditorPane
-import javax.swing.text._
+import javax.swing.text.{StyledDocument, StyledEditorKit}
 import java.awt.Color
 
 import horse.core.operator._
-import horse.Config
 
 object Editor extends EditorPane {
 
@@ -41,20 +40,21 @@ object Editor extends EditorPane {
         if (lines(currentLine) == End) {
             val correspondingOperator = lines.lastIndexWhere(_.isInstanceOf[ConditionalOperator], currentLine)
             if ((correspondingOperator > 0) && (lines(correspondingOperator).isInstanceOf[If])) {
-                val indent = indents(currentLine)
-                insertString(Else, indent, currentLineAttributes)
-                lines.insert(currentLine, Else)
-                indents.insert(currentLine, indent)
-                highlight(currentLine + 1, defaultAttributes)
+                insert(Else, indents(currentLine), currentLine)
+
+                import Document.Background._
+
+                document.setBackground(currentLine, Selected)
+                document.setBackground(currentLine + 1, Default)
             }
         }
     }
 
     def inverse() {
         def replaceOp(op: Operator) {
-            document.remove(currentLine * textWidth, textWidth)
+            document.remove(currentLine)
             lines.remove(currentLine)
-            insertString(op, indents(currentLine), currentLineAttributes)
+            document.insert(op, indents(currentLine), currentLine)
             lines.insert(currentLine, op)
         }
         lines(currentLine) match {
@@ -74,77 +74,20 @@ object Editor extends EditorPane {
     }
 
     def highlightOperator(line: Int, state: ProgramState.Value) {
-        highlight(currentLine, unselectedLineAttributes)
+        import Document.Background
+
+        document.setBackground(currentLine, Background.Default)
         currentLine = line
-        highlight(currentLine, debuggedAttributes(state))
-    }
-
-    // Fields
-    private[this] val indents: ArrayBuffer[Int] = new ArrayBuffer
-    private[this] val lines: ArrayBuffer[Operator] = new ArrayBuffer
-    private[this] var currentLine = 0
-    
-    private[this] val document = {
-        editorKit = new StyledEditorKit
-        peer.getDocument.asInstanceOf[StyledDocument] 
-    }
-
-    private[this] val defaultAttributes         = new SimpleAttributeSet
-    private[this] val currentLineAttributes     = new SimpleAttributeSet
-    private[this] val selectedLineAttributes    = new SimpleAttributeSet
-    private[this] val unselectedLineAttributes  = new SimpleAttributeSet
-    private[this] val keywordAttributes         = new SimpleAttributeSet
-
-    private[this] val debuggedAttributes = Map (
-        ProgramState.Normal -> new SimpleAttributeSet,
-        ProgramState.Error  -> new SimpleAttributeSet,
-        ProgramState.End    -> new SimpleAttributeSet
-    )
-
-    private[this] val tab = "   "
-
-    private[this] var textWidth = 58
-
-    // Constructor
-    StyleConstants.setFontSize(defaultAttributes, 12);
-    StyleConstants.setBackground(defaultAttributes, Color.darkGray)
-    StyleConstants.setForeground(defaultAttributes, Color.white);
-
-    StyleConstants.setFontSize(currentLineAttributes, 12);
-    StyleConstants.setBackground(currentLineAttributes, Color.gray);
-    StyleConstants.setForeground(currentLineAttributes, Color.white);
-
-    StyleConstants.setBackground(unselectedLineAttributes,    Color.darkGray);
-    StyleConstants.setBackground(selectedLineAttributes,      Color.gray);
-
-    StyleConstants.setForeground(keywordAttributes, Color.yellow);
-    StyleConstants.setBold(keywordAttributes, true);
-
-    StyleConstants.setBackground(debuggedAttributes(ProgramState.Normal), Color.blue)
-    StyleConstants.setBackground(debuggedAttributes(ProgramState.End),    new Color(0, 160, 80))
-    StyleConstants.setBackground(debuggedAttributes(ProgramState.Error),  Color.red)
-
-    background = Color.darkGray
-    editable = false
-    focusable = true
-
-    lines += ProgramBegin
-    indents += 0
-    lines += ProgramEnd
-    indents += 0
-
-    fillDocument()
-    highlight(0, selectedLineAttributes)
-
-    listenTo(keys)
-
-    reactions += {
-        case KeyPressed(_, Key.Up,      _, _) => up()
-        case KeyPressed(_, Key.Down,    _, _) => down()
-        case KeyPressed(_, Key.Delete,  _, _) => deleteOperator()
+        document.setBackground(currentLine, state match {
+            case ProgramState.Normal    => Background.Debugged
+            case ProgramState.Error     => Background.Error
+            case ProgramState.End       => Background.Success
+        })
     }
 
     // Private methods
+    import Document.Background
+
     private def up() {
         if (currentLine != 0)
            moveCurrentLine(currentLine - 1) 
@@ -155,118 +98,90 @@ object Editor extends EditorPane {
             moveCurrentLine(currentLine + 1)
     }
 
+    private def moveCurrentLine(newValue: Int) {
+        document.setBackground(currentLine, Background.Default)
+        currentLine = newValue
+        document.setBackground(currentLine, Background.Selected)
+    }
+
     private def deleteOperator() {
-        throw new UnsupportedOperationException("Delete operator")
+        def remove(i: Int) {
+            lines.remove(i)
+            indents.remove(i)
+            document.remove(i)
+        }
+
+        def shift(i: Int) {
+            indents(i) = indents(i) - 1
+            document.shift(i)
+        }
+
+        if (currentLine != 0) {
+            lines(currentLine) match {
+                case _: SimpleOperator => remove(currentLine) 
+                case If(c) => {
+                    var i = currentLine + 1
+                    while (indents(i) != indents(currentLine)) {
+                        shift(i)
+                        i += 1
+                    }
+                    remove(currentLine)
+                    i -= 1
+                    val toInsert = lines(i) == End 
+                    remove(i)
+                    if (toInsert) {
+                        insert(If(Condition.not(c)), indents(currentLine), i)
+                    }                         
+                }
+                case Else => {
+                    var i = currentLine + 1
+                    while (indents(i) != indents(currentLine)) {
+                        shift(i)
+                        i += 1
+                    }
+                    val indent = indents(currentLine)
+                    remove(currentLine)
+                    remove(i - 1)
+                    insert(End, indent, currentLine)
+                }
+                case While(_) => {
+                    var i = currentLine + 1
+                    while (indents(i) != indents(currentLine)) {
+                        shift(i)
+                        i += 1
+                    }
+                    remove(currentLine)
+                    remove(i - 1)
+                }
+                case End => {
+                    var i = currentLine - 1
+                    while (indents(i) != indents(currentLine)) {
+                        shift(i)
+                        i -= 1
+                    }
+
+                    val indent = indents(i)
+                    val toInsert = lines(i) == Else
+
+                    remove(currentLine)
+                    remove(i)
+                    currentLine -= 1
+                    if (toInsert) {
+                        insert(End, indent, i)
+                    }
+                }
+            }
+            if (currentLine == lines.size - 1)
+                currentLine -= 1
+            document.setBackground(currentLine, Background.Selected)
+        }
     }
 
     private def fillDocument() {
-        document.remove(0, document.getLength)
-
-        val maxWidth = (0 until lines.size).map(i => indents(i) * tab.size + textLen(lines(i))).max
-        while (maxWidth >= textWidth) {
-            textWidth *= 2
-        }        
+        document.clear()
         for (i <- 0 until lines.size) {
-            insertString(lines(i), indents(i), defaultAttributes, i)
+            document.insert(lines(i), indents(i), i)
         }
-    }
-
-    private def highlight(line: Int, attrs: AttributeSet) {
-        document.setCharacterAttributes(line * textWidth, textWidth, attrs, false)
-    }
-         
-
-    private def toString(op: Operator): String = op.toString
-
-    //private def getString(op: Operator, indent: Int): String = {
-        //val sb = new StringBuffer  
-        //for (_ <- 0 until indent) {
-            //sb.append("   ")
-        //}
-        //sb.append(toString(op))
-        //if (sb.length + 1 > textWidth) {
-            //textWidth *= 2
-            //fillDocument()
-        //} 
-        //sb.append(Array.fill(textWidth - sb.length - 1)(' '))
-        //sb.append('\n')
-        //sb.toString
-    //}
-
-    private def moveCurrentLine(newValue: Int) {
-        highlight(currentLine, unselectedLineAttributes)
-        currentLine = newValue
-        highlight(currentLine, selectedLineAttributes)
-    }
-
-    private def toString(c: Condition.Value) = c match {
-        case Condition.wall     => Config.getString("wall")
-        case Condition.empty    => Config.getString("empty")
-    }
-    
-    private def textLen(c: Condition.Value): Int = toString(c).length
-
-    private def textLen(op: Operator): Int = op match {
-        case ProgramBegin   => Config.getString("program-begin").length  
-        case ProgramEnd     => Config.getString("program-end").length
-        case Step           => Config.getString("step").length
-        case Jump           => Config.getString("jump").length
-        case TurnLeft       => Config.getString("turn-left").length
-        case TurnRight      => Config.getString("turn-right").length
-        case If(c)          => Config.getString("if").length + 2 + textLen(c) + 2 + Config.getString("then").length
-        case Else           => Config.getString("else").length
-        case While(c)       => Config.getString("while").length + 2 + textLen(c) + 2 + Config.getString("do").length
-        case End            => Config.getString("end").length
-    }
-
-    private def insertString(op: Operator, indent: Int, attrs: AttributeSet, line: Int = currentLine) {
-        if (indent * tab.size + textLen(op) >= textWidth) {
-            textWidth *= 2
-            fillDocument()
-        }
-        var offset = line * textWidth
-        for (i <- 0 until indent) {
-            document.insertString(offset, tab, attrs)
-            offset += tab.size
-        }
-        def addKeyword(name: String) {
-            val txt = Config.getString(name)  
-            document.insertString(offset, txt, attrs) 
-            document.setCharacterAttributes(offset, txt.length, keywordAttributes, false)
-            offset += txt.length
-        }
-        def addWord(name: String) {
-            val txt = Config.getString(name)  
-            document.insertString(offset, txt, attrs) 
-            offset += txt.length
-        }
-
-        op match {
-            case ProgramBegin   => addKeyword("program-begin")
-            case ProgramEnd     => addKeyword("program-end")
-            case Step           => addWord("step")
-            case Jump           => addWord("jump")
-            case TurnLeft       => addWord("turn-left")
-            case TurnRight      => addWord("turn-right")
-            case If(c)          => {
-                addKeyword("if") 
-                val condition = " (" + toString(c) + ") "
-                document.insertString(offset, condition, attrs)
-                offset += condition.length
-                addKeyword("then")
-            }
-            case Else           => addKeyword("else")
-            case While(c)       => {
-                addKeyword("while") 
-                val condition = " (" + toString(c) + ") "
-                document.insertString(offset, condition, attrs)
-                offset += condition.length
-                addKeyword("do")
-            }
-            case End            => addKeyword("end")
-        }
-        val tail = new String(Array.fill((line + 1) * textWidth - offset - 1)(' ')) + "\n" 
-        document.insertString(offset, tail, attrs)
     }
 
     private def getIndent(i: Int = currentLine) = {
@@ -280,31 +195,63 @@ object Editor extends EditorPane {
         }
     }
 
+    private def insert(op: Operator, indent: Int, line: Int) {
+        lines.insert(line, op)
+        indents.insert(line, indent)
+        document.insert(op, indent, line)
+    }
+
     private def addLine(op: SimpleOperator) {
-        document.setCharacterAttributes(currentLine * textWidth, textWidth, defaultAttributes, false)
+        document.setBackground(currentLine, Background.Default)
 
         val indent = getIndent()
 
         currentLine += 1
         
-        insertString(op, indent, currentLineAttributes)
-        lines.insert(currentLine, op)
-        indents.insert(currentLine, indent)
+        insert(op, indent, currentLine)
+        document.setBackground(currentLine, Background.Selected)
     }
 
     private def addConditionalOperator(op: ConditionalOperator) {
-        document.setCharacterAttributes(currentLine * textWidth, textWidth, defaultAttributes, false)
+        document.setBackground(currentLine, Background.Default)
 
         val indent = getIndent()
         
         currentLine += 1
 
-        insertString(op, indent, currentLineAttributes)
-        lines.insert(currentLine, op)
-        indents.insert(currentLine, indent)
+        insert(op, indent, currentLine)
+        insert(End, indent, currentLine + 1)
 
-        insertString(End, indent, defaultAttributes, currentLine + 1)
-        lines.insert(currentLine + 1, End)
-        indents.insert(currentLine + 1, indent)
+        document.setBackground(currentLine, Background.Selected)
+    }
+
+    // Fields
+    private[this] val indents: ArrayBuffer[Int] = new ArrayBuffer
+    private[this] val lines: ArrayBuffer[Operator] = new ArrayBuffer
+    private[this] var currentLine = 0
+    
+    editorKit = new StyledEditorKit
+    private[this] val document: IDocument = new Document(peer.getDocument.asInstanceOf[StyledDocument]) 
+
+    // Constructor
+
+    background = Color.darkGray
+    editable = false
+    focusable = true
+
+    lines += ProgramBegin
+    indents += 0
+    lines += ProgramEnd
+    indents += 0
+
+    fillDocument()
+    document.setBackground(0, Background.Selected)
+
+    listenTo(keys)
+
+    reactions += {
+        case KeyPressed(_, Key.Up,      _, _) => up()
+        case KeyPressed(_, Key.Down,    _, _) => down()
+        case KeyPressed(_, Key.Delete,  _, _) => deleteOperator()
     }
 }
