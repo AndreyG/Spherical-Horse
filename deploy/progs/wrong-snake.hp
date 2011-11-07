@@ -1,0 +1,8 @@
+ProgramBegin
+while empty
+Step
+TurnRight
+Step
+TurnLeft
+End
+ProgramEnd
