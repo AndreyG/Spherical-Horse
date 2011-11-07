@@ -38,8 +38,8 @@ object Editor extends EditorPane {
 
     def createElse() {
         if (lines(currentLine) == End) {
-            val correspondingOperator = lines.lastIndexWhere(_.isInstanceOf[ConditionalOperator], currentLine)
-            if ((correspondingOperator > 0) && (lines(correspondingOperator).isInstanceOf[If])) {
+            val correspondingOperator = indents.lastIndexOf(indents(currentLine), currentLine - 1)
+            if (lines(correspondingOperator).isInstanceOf[If]) {
                 insert(Else, indents(currentLine), currentLine)
 
                 import Document.Background._
