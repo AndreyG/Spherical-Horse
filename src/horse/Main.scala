@@ -4,7 +4,7 @@ import gui.{Field, Editor, MainFrame}
 
 import core.{Interpreter, FieldState}
 import swing._
-import swing.event.{Key, KeyPressed}
+import swing.event.Key
 import javax.swing.KeyStroke
 import java.awt.event.{InputEvent, KeyEvent}
 
@@ -25,25 +25,27 @@ object Main extends SimpleSwingApplication {
         frame.setMenuBar(editMenu)
         editMenu.enabled = true
         executeMenu.enabled = false
+
         switchButton.action = switchToExecute
+        switchButton.mnemonic = Key.Q
 
         editor.prepare()
     }
-
-    switchToEdit.accelerator = Some(KeyStroke.getKeyStroke(':'))
 
     val switchToExecute: Action = Action("Execute") {
         frame.setMenuBar(executeMenu)
         executeMenu.enabled = true
         editMenu.enabled = false
+        
         switchButton.action = switchToEdit
+        switchButton.mnemonic = Key.Q
 
         executeMenu.requestFocus()
         interpreter = new Interpreter(editor.getOperators)
         editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
     }
 
-    val switchButton = new Button(switchToEdit)
+    val switchButton = new Button
 
     val frame = new MainFrame(editor, field, switchButton)
 
@@ -80,10 +82,10 @@ object Main extends SimpleSwingApplication {
 
     val executeMenu: MenuBar = new MenuBar {
         contents += createMenu("Execute",
-            createMenuItem("Step", KeyStroke.getKeyStroke('S'), state(Step)),
-            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), state(Jump)),
-            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), state(TurnLeft)),
-            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), state(TurnRight)),
+            createMenuItem("Step", KeyStroke.getKeyStroke('S'), { state(Step); field.repaint() }),
+            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), { state(Jump); field.repaint() }),
+            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), { state(TurnLeft); field.repaint() }),
+            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), { state(TurnRight); field.repaint() }),
             new Separator,
             createMenuItem("Clear field", KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, true), {
                 state.reset()
@@ -119,8 +121,7 @@ object Main extends SimpleSwingApplication {
         )
     }
 
-    frame.setMenuBar(executeMenu)
-    executeMenu.requestFocus()
+    switchToExecute()
 
     override def top = frame
 }

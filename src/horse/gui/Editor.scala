@@ -104,7 +104,7 @@ class Editor() extends EditorPane {
     StyleConstants.setBold(keywordAttributes, true);
 
     StyleConstants.setBackground(debuggedAttributes(ProgramState.Normal), Color.blue)
-    StyleConstants.setBackground(debuggedAttributes(ProgramState.End),    Color.green)
+    StyleConstants.setBackground(debuggedAttributes(ProgramState.End),    new Color(0, 160, 80))
     StyleConstants.setBackground(debuggedAttributes(ProgramState.Error),  Color.red)
 
     background = Color.darkGray
