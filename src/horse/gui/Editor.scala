@@ -8,7 +8,7 @@ import java.awt.Color
 
 import horse.core.operator._
 
-class Editor() extends EditorPane {
+object Editor extends EditorPane {
 
     // Interface
     def program: operator.Program = lines

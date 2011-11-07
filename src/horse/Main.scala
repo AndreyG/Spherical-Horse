@@ -19,9 +19,8 @@ object Main extends SimpleSwingApplication {
     val cols = Config.getInt("field.cols")
 
     val state = new FieldState(cols, rows)
-    val editor = new Editor
     val field = new Field(rows, cols, state)
-    var interpreter = new Interpreter(editor.program)
+    var interpreter = new Interpreter(Editor.program)
 
     val switchToEdit: Action = Action("Edit") {
         frame.setMenuBar(editMenu)
@@ -31,7 +30,7 @@ object Main extends SimpleSwingApplication {
         switchButton.action = switchToExecute
         switchButton.mnemonic = Key.Q
 
-        editor.prepare()
+        Editor.prepare()
     }
 
     val switchToExecute: Action = Action("Execute") {
@@ -43,13 +42,13 @@ object Main extends SimpleSwingApplication {
         switchButton.mnemonic = Key.Q
 
         executeMenu.requestFocus()
-        interpreter = new Interpreter(editor.program)
-        editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
+        interpreter = new Interpreter(Editor.program)
+        Editor.highlightOperator(interpreter.currentLine, Editor.ProgramState.Normal)
     }
 
     val switchButton = new Button
 
-    val frame = new MainFrame(editor, field, switchButton)
+    val frame = new MainFrame(Editor, field, switchButton)
 
     import gui.MenuUtils._
 
@@ -58,26 +57,26 @@ object Main extends SimpleSwingApplication {
     val editMenu: MenuBar = new MenuBar {
         contents += createMenu("File",
             createMenuItem("Load", KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK, true), {
-                if (fileChooser.showOpenDialog(editor) == FileChooser.Result.Approve) {
+                if (fileChooser.showOpenDialog(Editor) == FileChooser.Result.Approve) {
                 }
             }),
             createMenuItem("Save", KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK, true), {
-                if (fileChooser.showSaveDialog(editor) == FileChooser.Result.Approve) {
+                if (fileChooser.showSaveDialog(Editor) == FileChooser.Result.Approve) {
                 }
             })
         )
 
         contents += createMenu("Operator",
-            createMenuItem("Step", KeyStroke.getKeyStroke('S'), editor.step()),
-            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), editor.jump()),
-            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), editor.turnLeft()),
-            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), editor.turnRight()),
+            createMenuItem("Step", KeyStroke.getKeyStroke('S'), Editor.step()),
+            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), Editor.jump()),
+            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), Editor.turnLeft()),
+            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), Editor.turnRight()),
             new Separator,
-            createMenuItem("If", KeyStroke.getKeyStroke("I"), editor.createIf()),
-            createMenuItem("Else", KeyStroke.getKeyStroke("E"), editor.createElse()),
-            createMenuItem("While", KeyStroke.getKeyStroke("W"), editor.createWhile()),
+            createMenuItem("If", KeyStroke.getKeyStroke("I"), Editor.createIf()),
+            createMenuItem("Else", KeyStroke.getKeyStroke("E"), Editor.createElse()),
+            createMenuItem("While", KeyStroke.getKeyStroke("W"), Editor.createWhile()),
             new Separator,
-            createMenuItem("Not", KeyStroke.getKeyStroke("N"), editor.inverse())
+            createMenuItem("Not", KeyStroke.getKeyStroke("N"), Editor.inverse())
         )
 
         enabled = false
@@ -98,22 +97,22 @@ object Main extends SimpleSwingApplication {
             })
         )
 
-        import editor.ProgramState._
+        import Editor.ProgramState._
 
         contents += createMenu("Run",
             createMenuItem("Move", KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0, false), {
                 val res = interpreter.step(state)
                 if (res) {
                     field.repaint()
-                    editor.highlightOperator(interpreter.currentLine, if (interpreter.isStopped) End else Normal)
+                    Editor.highlightOperator(interpreter.currentLine, if (interpreter.isStopped) End else Normal)
                 } else {
-                    editor.highlightOperator(interpreter.currentLine, Error)
+                    Editor.highlightOperator(interpreter.currentLine, Error)
                 }
             }),
             createMenuItem("Run...", KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0, true), {
                 val res = interpreter.run(state)
                 field.repaint()
-                editor.highlightOperator(interpreter.currentLine, res match {
+                Editor.highlightOperator(interpreter.currentLine, res match {
                     case Interpreter.Result.Success => End
                     case _ => Error
                 })
@@ -121,7 +120,7 @@ object Main extends SimpleSwingApplication {
             new Separator,
             createMenuItem("Restart", KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.CTRL_MASK, true), {
                 interpreter.restart()
-                editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
+                Editor.highlightOperator(interpreter.currentLine, Editor.ProgramState.Normal)
             })
         )
     }
