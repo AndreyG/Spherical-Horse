@@ -1,9 +1,10 @@
 package horse
 
-import gui.{StatusLine, Field, Editor, MainFrame}
+import gui.{Field, Editor, MainFrame}
 
 import core.{Interpreter, FieldState}
 import swing._
+import swing.event.{Key, KeyPressed}
 import javax.swing.KeyStroke
 import java.awt.event.{InputEvent, KeyEvent}
 
@@ -29,14 +30,17 @@ object Main extends SimpleSwingApplication {
         editor.prepare()
     }
 
+    switchToEdit.accelerator = Some(KeyStroke.getKeyStroke(':'))
+
     val switchToExecute: Action = Action("Execute") {
         frame.setMenuBar(executeMenu)
         executeMenu.enabled = true
         editMenu.enabled = false
         switchButton.action = switchToEdit
 
-        editor.requestFocus()
+        executeMenu.requestFocus()
         interpreter = new Interpreter(editor.getOperators)
+        editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
     }
 
     val switchButton = new Button(switchToEdit)
@@ -76,42 +80,47 @@ object Main extends SimpleSwingApplication {
 
     val executeMenu: MenuBar = new MenuBar {
         contents += createMenu("Execute",
-            createMenuItem("Step", KeyStroke.getKeyStroke('S'), move(Step)),
-            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), move(Jump)),
-            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), move(TurnLeft)),
-            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), move(TurnRight)),
+            createMenuItem("Step", KeyStroke.getKeyStroke('S'), state(Step)),
+            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), state(Jump)),
+            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), state(TurnLeft)),
+            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), state(TurnRight)),
             new Separator,
             createMenuItem("Clear field", KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, true), {
                 state.reset()
                 field.repaint()
             })
         )
+
+        import editor.ProgramState._
+
         contents += createMenu("Run",
             createMenuItem("Move", KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0, false), {
-                interpreter.step(state)
-                field.repaint()
+                val res = interpreter.step(state)
+                if (res) {
+                    field.repaint()
+                    editor.highlightOperator(interpreter.currentLine, if (interpreter.isStopped) End else Normal)
+                } else {
+                    editor.highlightOperator(interpreter.currentLine, Error)
+                }
             }),
             createMenuItem("Run...", KeyStroke.getKeyStroke(KeyEvent.VK_F9, 0, true), {
-                interpreter.run(state)
+                val res = interpreter.run(state)
                 field.repaint()
+                editor.highlightOperator(interpreter.currentLine, res match {
+                    case Interpreter.Result.Success => End
+                    case _ => Error
+                })
             }),
             new Separator,
             createMenuItem("Restart", KeyStroke.getKeyStroke(KeyEvent.VK_F2, InputEvent.CTRL_MASK, true), {
                 interpreter.restart()
+                editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
             })
         )
     }
 
     frame.setMenuBar(executeMenu)
-
-    private def move(op: core.operator.SimpleOperator) {
-        if (state(op)) {
-            field.repaint()
-            StatusLine.removeError()
-        } else {
-            StatusLine.raiseError()
-        }
-    }
+    executeMenu.requestFocus()
 
     override def top = frame
 }

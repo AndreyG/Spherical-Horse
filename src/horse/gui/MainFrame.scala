@@ -17,7 +17,14 @@ class MainFrame(editor: Component, field: Component, button: Component)
 
         val editorPanel = new BorderPanel {
             add(button, South)
-            add(editor, Center)
+            add(
+                new ScrollPane(
+                    new BorderPanel {
+                        add(editor, Center)
+                    }) {
+                        horizontalScrollBarPolicy = ScrollPane.BarPolicy.AsNeeded
+                    },
+                Center)
         }
 
         editorPanel.minimumSize = new Dimension(editorWidth, height)

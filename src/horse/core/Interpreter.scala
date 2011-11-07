@@ -15,6 +15,8 @@ class Interpreter(operators: IndexedSeq[operator.Operator]) {
 
     def isStopped = current.isInstanceOf[TerminalState]
 
+    def currentLine = current.line
+
     def step(field: FieldState): Boolean = {
         val res = current match {
             case SimpleState(operator, _, _) => field(operator)
@@ -60,10 +62,13 @@ class Interpreter(operators: IndexedSeq[operator.Operator]) {
         res
     }
 
-    def currentLine = current.line
-
     def run(field: FieldState): ResultType = {
-        var cycles = operators.filter(_.isInstanceOf[operator.While]).zipWithIndex.map(elem => (elem._2, 0)).toMap 
+        var cycles = 
+            operators
+                .zipWithIndex
+                .filter(elem => elem._1.isInstanceOf[operator.While])
+                .map(elem => (elem._2, 0))
+                .toMap 
 
         while (!isStopped) {
             if (step(field)) {
