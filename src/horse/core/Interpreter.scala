@@ -9,7 +9,7 @@ object Interpreter {
 }
 
 class Interpreter(operators: IndexedSeq[operator.Operator]) {
-    import Program._
+    import program._
     import Interpreter.Result._
     type ResultType = Interpreter.Result.Value
 
@@ -92,7 +92,7 @@ class Interpreter(operators: IndexedSeq[operator.Operator]) {
         current = start
     }
 
-    private[this] val start = buildState(operators)
+    private[this] val start = program.buildState(operators)
     private[this] var current = start
 
     private[this] val stack: Stack[ConditionalState] = new Stack

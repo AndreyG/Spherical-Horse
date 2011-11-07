@@ -1,13 +1,17 @@
 package horse
 
-import gui.{Field, Editor, MainFrame}
-
-import core.{Interpreter, FieldState}
+import io.Source
 import swing._
 import swing.event.Key
 import javax.swing.KeyStroke
+import javax.swing.filechooser.FileNameExtensionFilter
 import java.awt.event.{InputEvent, KeyEvent}
-import java.io.File
+import java.io.{File, FileOutputStream, PrintStream}
+
+import gui.{Field, Editor, MainFrame}
+
+import core.{Interpreter, FieldState}
+import core.serialization
 
 object Main extends SimpleSwingApplication {
 
@@ -25,15 +29,22 @@ object Main extends SimpleSwingApplication {
     import gui.MenuUtils._
 
     val fileChooser = new FileChooser(new File("progs"))
+    fileChooser.fileFilter = new FileNameExtensionFilter("Horse programs", "hp")
 
     val editMenu: MenuBar = new MenuBar {
         contents += createMenu("File",
             createMenuItem("Load", KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK, true), {
                 if (fileChooser.showOpenDialog(Editor) == FileChooser.Result.Approve) {
+                    Editor.program = serialization.fromText(Source.fromFile(fileChooser.selectedFile).getLines)
                 }
             }),
             createMenuItem("Save", KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK, true), {
                 if (fileChooser.showSaveDialog(Editor) == FileChooser.Result.Approve) {
+                    val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
+                    for (line <- serialization.toText(Editor.program)) {
+                        out.println(line)
+                    }
+                    out.close()
                 }
             })
         )

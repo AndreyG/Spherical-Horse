@@ -15,6 +15,12 @@ object Editor extends EditorPane {
     def program_=(program: operator.Program) {
         lines.clear()
         lines ++= program
+        indents.clear()
+        indents += 0
+        for (i <- 1 until lines.size - 1) {
+            indents += getIndent
+        }
+        indents += 0
         fillDocument()
         moveCurrentLine(0)
     }
@@ -187,8 +193,6 @@ object Editor extends EditorPane {
 
     private def getIndent: Int = {
         val indent = indents(currentLine)
-        println(currentLine)
-        println(lines(currentLine))
         lines(currentLine) match {
             case ProgramBegin => indent + 1
             case If(_) => indent + 1
