@@ -36,7 +36,7 @@ class FieldState(width: Int, height: Int) {
         case West => new Pos(pos.x - 1, pos.y) 
     }
 
-    private def isValid(pos: Pos) = (pos.x >= 0) && (pos.y >= 0) && (pos.x < width) && (pos.y < width)
+    private def isValid(pos: Pos) = (pos.x >= 0) && (pos.y >= 0) && (pos.x < width) && (pos.y < height)
 
     def apply(c: Condition.Value) = {
         isValid(move()) != (c == Condition.wall)

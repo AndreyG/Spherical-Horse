@@ -11,7 +11,14 @@ import horse.core.operator._
 class Editor() extends EditorPane {
 
     // Interface
-    def getOperators: IndexedSeq[Operator] = lines
+    def program: operator.Program = lines
+    def program_=(program: operator.Program) {
+        lines.clear()
+        lines ++= program
+        fillDocument()
+        moveCurrentLine(0)
+    }
+
     def step() { addLine(Step) }
     def jump() { addLine(Jump) }
     def turnLeft() { addLine(TurnLeft) }

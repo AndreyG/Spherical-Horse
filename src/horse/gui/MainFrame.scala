@@ -3,14 +3,16 @@ package horse.gui
 import java.awt.Dimension
 import swing._
 
+import horse.Config
+
 class MainFrame(editor: Component, field: Component, button: Component)
     extends scala.swing.MainFrame {
 
     title = "Shperical Horse"
 
-    private[this] val height = 600
-    private[this] val fieldWidth = height
-    private[this] val editorWidth = 400
+    private[this] val editorWidth   = Config.getInt("editor.width")
+    private[this] val fieldWidth    = Config.getInt("field.width")
+    private[this] val height        = Config.getInt("field.height")
 
     contents = new BoxPanel(Orientation.Horizontal) {
         import BorderPanel.Position._

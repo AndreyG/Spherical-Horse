@@ -7,6 +7,7 @@ import swing._
 import swing.event.Key
 import javax.swing.KeyStroke
 import java.awt.event.{InputEvent, KeyEvent}
+import java.io.File
 
 object Main extends SimpleSwingApplication {
 
@@ -14,12 +15,13 @@ object Main extends SimpleSwingApplication {
         val Editing, Executing = Value
     }
 
-    val rows = 10
-    val cols = 10
-    val state = new FieldState(rows, cols)
+    val rows = Config.getInt("field.rows")
+    val cols = Config.getInt("field.cols")
+
+    val state = new FieldState(cols, rows)
     val editor = new Editor
     val field = new Field(rows, cols, state)
-    var interpreter = new Interpreter(editor.getOperators)
+    var interpreter = new Interpreter(editor.program)
 
     val switchToEdit: Action = Action("Edit") {
         frame.setMenuBar(editMenu)
@@ -41,7 +43,7 @@ object Main extends SimpleSwingApplication {
         switchButton.mnemonic = Key.Q
 
         executeMenu.requestFocus()
-        interpreter = new Interpreter(editor.getOperators)
+        interpreter = new Interpreter(editor.program)
         editor.highlightOperator(interpreter.currentLine, editor.ProgramState.Normal)
     }
 
@@ -51,29 +53,32 @@ object Main extends SimpleSwingApplication {
 
     import gui.MenuUtils._
 
-    val editMenu: MenuBar = new MenuBar {
-//        contents += createMenu("Operator",
-//            createMenuItem("Step", KeyStroke.getKeyStroke('S'), editor.step()),
-//            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), editor.jump()),
-//            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), editor.turnLeft()),
-//            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), editor.turnRight())
-//        )
+    val fileChooser = new FileChooser(new File("progs"))
 
-        contents += createMenuItem("Step", KeyStroke.getKeyStroke('S'), editor.step())
-        contents += new Separator
-        contents += createMenuItem("Jump", KeyStroke.getKeyStroke('J'), editor.jump())
-        contents += new Separator
-        contents += createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), editor.turnLeft())
-        contents += new Separator
-        contents += createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), editor.turnRight())
-        contents += new Separator
-        contents += createMenuItem("If", KeyStroke.getKeyStroke("I"), editor.createIf())
-        contents += new Separator
-        contents += createMenuItem("Else", KeyStroke.getKeyStroke("E"), editor.createElse())
-        contents += new Separator
-        contents += createMenuItem("While", KeyStroke.getKeyStroke("W"), editor.createWhile())
-        contents += new Separator
-        contents += createMenuItem("Not", KeyStroke.getKeyStroke("N"), editor.inverse())
+    val editMenu: MenuBar = new MenuBar {
+        contents += createMenu("File",
+            createMenuItem("Load", KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK, true), {
+                if (fileChooser.showOpenDialog(editor) == FileChooser.Result.Approve) {
+                }
+            }),
+            createMenuItem("Save", KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK, true), {
+                if (fileChooser.showSaveDialog(editor) == FileChooser.Result.Approve) {
+                }
+            })
+        )
+
+        contents += createMenu("Operator",
+            createMenuItem("Step", KeyStroke.getKeyStroke('S'), editor.step()),
+            createMenuItem("Jump", KeyStroke.getKeyStroke('J'), editor.jump()),
+            createMenuItem("Turn left", KeyStroke.getKeyStroke('L'), editor.turnLeft()),
+            createMenuItem("Turn right", KeyStroke.getKeyStroke('R'), editor.turnRight()),
+            new Separator,
+            createMenuItem("If", KeyStroke.getKeyStroke("I"), editor.createIf()),
+            createMenuItem("Else", KeyStroke.getKeyStroke("E"), editor.createElse()),
+            createMenuItem("While", KeyStroke.getKeyStroke("W"), editor.createWhile()),
+            new Separator,
+            createMenuItem("Not", KeyStroke.getKeyStroke("N"), editor.inverse())
+        )
 
         enabled = false
     }
