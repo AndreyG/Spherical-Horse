@@ -7,12 +7,13 @@ import javax.swing.text.{StyledDocument, StyledEditorKit}
 import java.awt.Color
 
 import horse.core.operator._
+import horse.core.Interpreter.Program
 
 object Editor extends EditorPane {
 
     // Interface
-    def program: operator.Program = lines
-    def program_=(program: operator.Program) {
+    def program: Program = lines
+    def program_=(program: Program) {
         lines.clear()
         lines ++= program
         indents.clear()

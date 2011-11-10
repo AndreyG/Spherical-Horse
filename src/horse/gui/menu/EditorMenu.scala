@@ -1,9 +1,9 @@
 package horse.gui.menu
 
 import scala.swing.{MenuBar, Separator, FileChooser}
-import scala.io.Source
 
-import java.io.{File, FileOutputStream, PrintStream}
+import java.io.{BufferedReader, File, FileReader, FileOutputStream, PrintStream}
+import javax.swing.JOptionPane
 import java.awt.event.KeyEvent._
 import javax.swing.filechooser.FileNameExtensionFilter
 
@@ -22,16 +22,24 @@ object EditorMenu extends MenuBar {
     contents += createMenu("File",
         createMenuItem("Load", ctrlKeyStroke(VK_L), {
             if (fileChooser.showOpenDialog(Editor) == Approve) {
-                val in = Source.fromFile(fileChooser.selectedFile) 
-                Editor.program = serialization.fromText(in.getLines)
+                val in = new BufferedReader(new FileReader(fileChooser.selectedFile)) 
+                try {
+                    Editor.program = serialization.load(in)
+                } catch {
+                    case _ => JOptionPane.showMessageDialog(this.peer, 
+                        "corruped file", 
+                        "error",
+                        JOptionPane.ERROR_MESSAGE
+                    )
+                } finally {
+                    in.close()
+                }
             }
         }),
         createMenuItem("Save", ctrlKeyStroke(VK_S), {
             if (fileChooser.showSaveDialog(Editor) == Approve) {
                 val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
-                for (line <- serialization.toText(Editor.program)) {
-                    out.println(line)
-                }
+                serialization.dump(Editor.program, out) 
                 out.close()
             }
         })

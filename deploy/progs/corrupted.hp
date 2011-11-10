@@ -1,0 +1,12 @@
+ProgramBegin
+while empty
+Step
+TurnRight
+if empty
+Step
+bla-bla
+TurnLeft
+End
+End
+TurnLeft
+ProgramEnd

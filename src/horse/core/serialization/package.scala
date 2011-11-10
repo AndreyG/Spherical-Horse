@@ -1,28 +1,37 @@
 package horse.core
 
-import operator._
+import scala.collection.mutable.{Buffer, ArrayBuffer}
+
+import java.io.{BufferedReader, PrintStream}
+
+import horse.core.operator.Operator
+import horse.core.Interpreter.Program
+//import horse.core.FieldState
 
 package object serialization {
-    def toText(program: Iterable[Operator]) = program.map(toString)
-    def fromText(lines: Iterator[String])   = lines.map(fromString).toIndexedSeq
 
-    private def toString(op: Operator) = op match {
-        case If(c)      => "if " + c.toString
-        case While(c)   => "while " + c.toString
-        case _          => op.toString
+    def dump(program: Program, out: PrintStream) {
+        for (line <- program) {
+            out.println(OperatorSerializer.toString(line))
+        }
     }
 
-    private def fromString(line: String): Operator = {
-        if (line.startsWith("if"))
-            return If(Condition.withName(line.substring(3, line.length)))
-        else if (line.startsWith("while"))
-            return While(Condition.withName(line.substring(6, line.length)))
-        else {
-            for (op <- List(Step, Jump, TurnLeft, TurnRight, Else, End, ProgramBegin, ProgramEnd)) {
-                if (line == op.toString)
-                    return op
-            }
+    def load(in: BufferedReader) = {
+        val buffer: Buffer[Operator] = new ArrayBuffer
+        var s = in.readLine
+        while (s != null) {
+            buffer += OperatorSerializer.fromString(s)
+            s = in.readLine
         }
-        sys.error("Undefined operator:\n" + line)
+        buffer.toIndexedSeq
+    }
+
+    def dump(field: FieldState, out: PrintStream) {
+        out.println(field.width + " " + field.height)
+        out.println(field.pos.x + " " + field.pos.y)
+        out.println(field.direction)
+        for ((p1, p2) <- field.getShow) {
+            out.println(p1.x + " " + p1.y + " " + p2.x + " " + p2.y)
+        }
     }
 }

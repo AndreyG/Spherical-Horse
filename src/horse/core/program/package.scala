@@ -12,15 +12,17 @@ sealed case class StartState(next: State) extends State {
 }
 sealed case class TerminalState(line: Int) extends State
 sealed case class SimpleState(operator: SimpleOperator, line: Int, next: State) extends State
-sealed case class IfState(c: program.Condition, line: Int, body: State, next: State) extends ConditionalState(line)
-sealed case class IfElseState(c: program.Condition, line: Int, trueBranch: State, falseBranch: State, next: State) extends ConditionalState(line) 
-sealed case class WhileState(c: program.Condition, line: Int, body: State, next: State) extends ConditionalState(line)
+sealed case class IfState(c: Condition.Value, line: Int, body: State, next: State) extends ConditionalState(line)
+sealed case class IfElseState(c: Condition.Value, line: Int, trueBranch: State, falseBranch: State, next: State) extends ConditionalState(line) 
+sealed case class WhileState(c: Condition.Value, line: Int, body: State, next: State) extends ConditionalState(line)
 sealed case class EndState(line: Int) extends State
 
-package object program {
+import horse.core.Interpreter.Program
+
+object Builder {
     type Condition = Condition.Value
 
-    def buildState(operators: IndexedSeq[Operator]): State = {
+    def apply(operators: Program): State = {
         def step(i: Int): (State, Int) = {
             operators(i) match {
                 case ProgramBegin => {

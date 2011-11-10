@@ -3,21 +3,28 @@ package horse.core
 import scala.collection.mutable.Stack
 
 object Interpreter {
+    type Program = IndexedSeq[operator.Operator]
+
     object Result extends Enumeration {
         val Success, Crash, InfiniteLoop = Value
     }
 }
 
-class Interpreter(operators: IndexedSeq[operator.Operator]) {
-    import program._
+import Interpreter.Program
+
+class Interpreter private (operators: Program, start: program.State) {
+    def this(operators: Program) = this(operators, program.Builder(operators))
+
     import Interpreter.Result._
     type ResultType = Interpreter.Result.Value
 
-    def isStopped = current.isInstanceOf[TerminalState]
+    def isStopped = current.isInstanceOf[program.TerminalState]
 
     def currentLine = current.line
 
     def step(field: FieldState): Boolean = {
+        import program._
+
         val res = current match {
             case SimpleState(operator, _, _) => field(operator)
             case _ => true
@@ -92,9 +99,9 @@ class Interpreter(operators: IndexedSeq[operator.Operator]) {
         current = start
     }
 
-    private[this] val start = program.buildState(operators)
-    private[this] var current = start
+    def initial = new Interpreter(operators, start)
 
-    private[this] val stack: Stack[ConditionalState] = new Stack
+    private[this] var current = start
+    private[this] val stack: Stack[program.ConditionalState] = new Stack
 
 }

@@ -26,7 +26,3 @@ case object End extends Operator
 
 case object ProgramBegin extends Operator
 case object ProgramEnd extends Operator
-
-package object operator {
-    type Program = IndexedSeq[Operator]
-}

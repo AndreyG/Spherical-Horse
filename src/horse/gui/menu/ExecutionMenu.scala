@@ -1,8 +1,14 @@
 package horse.gui.menu
 
-import scala.swing.{MenuBar, Separator}
+import scala.swing.{MenuBar, Separator, FileChooser}
+import java.io.{File, FileOutputStream, PrintStream}
 import java.awt.event.KeyEvent._
+import javax.swing.JOptionPane
+import javax.swing.filechooser.FileNameExtensionFilter
 
+import FileChooser.Result.Approve
+
+import horse.core.serialization
 import horse.core.{FieldState, Interpreter}
 import horse.core.operator.{SimpleOperator, Step, Jump, TurnLeft, TurnRight}
 import horse.gui.{Editor, Field}
@@ -63,5 +69,28 @@ class ExecutionMenu(state: FieldState, field: Field) extends MenuBar {
         state(op)
         field.repaint()
     }
+
+    private[this] val fileChooser = new FileChooser(new File("problems"))
+    fileChooser.fileFilter = new FileNameExtensionFilter("Spherical horse problems", "shp")
+
+    contents += createMenu("Problemset",
+        createMenuItem("Create",    ctrlKeyStroke(VK_S), {
+            val tmpState        =       state.initial
+            val tmpInterpreter  = interpreter.initial
+            if (tmpInterpreter.run(tmpState) == Interpreter.Result.Success) {
+                if (fileChooser.showSaveDialog(field) == Approve) {
+                    val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
+                    serialization.dump(tmpState, out)
+                    out.close()
+                }
+            } else {
+                JOptionPane.showMessageDialog(this.peer, 
+                    "Erroneous programs are declined to be saved as problems", 
+                    "error",
+                    JOptionPane.ERROR_MESSAGE
+                )
+            }
+        })
+    )
 
 }
