@@ -11,8 +11,8 @@ class MainFrame(field: Component, executeMenu: MenuBar, editMenu: MenuBar,
     title = "Shperical Horse"
 
     private[this] val editorWidth   = Config.getInt("editor.width")
-    private[this] val fieldWidth    = Config.getInt("field.width")
-    private[this] val height        = Config.getInt("field.height")
+    private[this] val fieldWidth    = Config.getInt("field-image.width")
+    private[this] val height        = Config.getInt("field-image.height")
 
     private[this] val button = new SwitchButton(this, executeMenu, editMenu, onEdit, onExecute)
 

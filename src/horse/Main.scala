@@ -2,33 +2,34 @@ package horse
 
 import swing.SimpleSwingApplication
 
-import gui.{Field, Editor, MainFrame}
+import gui.{FieldImage, Editor, MainFrame}
 import gui.menu.{EditorMenu, ExecutionMenu}
 
-import core.{Interpreter, FieldState}
+import core.fieldstate.DynamicField
+import core.program.Interpreter
 
 object Main extends SimpleSwingApplication {
 
-    val rows = Config.getInt("field.rows")
-    val cols = Config.getInt("field.cols")
+    val field = DynamicField.empty
+    val image = new FieldImage(field)
 
-    val state = new FieldState(cols, rows)
-    val field = new Field(rows, cols, state)
-
-    val executionMenu = new ExecutionMenu(state, field)
+    val player      = new Player(field, image)
+    val debugger    = new Debugger(field, image)
 
     override def top = new MainFrame (
-        field, 
-        executionMenu,
+        image, 
+        new ExecutionMenu(player, debugger),
         EditorMenu, 
         {
             Editor.prepare() 
             Editor.requestFocus()
         },
         {
-            executionMenu.interpreter = new Interpreter(Editor.program)
+            val interpreter = new Interpreter(Editor.program) 
+            debugger.set(interpreter)
+            Problem.set(interpreter)
             Editor.highlightOperator(0, Editor.ProgramState.Normal)
-            field.requestFocus()
+            image.requestFocus()
         }
     )
 

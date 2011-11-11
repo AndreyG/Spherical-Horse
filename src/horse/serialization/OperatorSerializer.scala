@@ -1,4 +1,4 @@
-package horse.core.serialization
+package horse.serialization
 
 import horse.core.operator._
 

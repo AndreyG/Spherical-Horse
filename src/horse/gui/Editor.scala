@@ -7,7 +7,7 @@ import javax.swing.text.{StyledDocument, StyledEditorKit}
 import java.awt.Color
 
 import horse.core.operator._
-import horse.core.Interpreter.Program
+import horse.core.program.Interpreter.Program
 
 object Editor extends EditorPane {
 
@@ -240,7 +240,6 @@ object Editor extends EditorPane {
 
     fillDocument()
     document.setBackground(0, Background.Selected)
-
 
     listenTo(keys)
     reactions += {

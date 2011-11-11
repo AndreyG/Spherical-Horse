@@ -9,7 +9,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
 
 import FileChooser.Result.Approve
 
-import horse.core.serialization
+import horse.serialization
 import horse.gui.Editor
 
 import menu._
@@ -21,10 +21,10 @@ object EditorMenu extends MenuBar {
 
     contents += createMenu("File",
         createMenuItem("Load", ctrlKeyStroke(VK_L), {
-            if (fileChooser.showOpenDialog(Editor) == Approve) {
+            if (fileChooser.showOpenDialog(this) == Approve) {
                 val in = new BufferedReader(new FileReader(fileChooser.selectedFile)) 
                 try {
-                    Editor.program = serialization.load(in)
+                    Editor.program = serialization.loadProgram(in)
                 } catch {
                     case _ => JOptionPane.showMessageDialog(this.peer, 
                         "corruped file", 
@@ -37,9 +37,9 @@ object EditorMenu extends MenuBar {
             }
         }),
         createMenuItem("Save", ctrlKeyStroke(VK_S), {
-            if (fileChooser.showSaveDialog(Editor) == Approve) {
+            if (fileChooser.showSaveDialog(this) == Approve) {
                 val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
-                serialization.dump(Editor.program, out) 
+                serialization.dumpProgram(Editor.program, out) 
                 out.close()
             }
         })

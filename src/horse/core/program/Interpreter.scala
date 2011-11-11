@@ -1,30 +1,30 @@
-package horse.core
+package horse.core.program
 
 import scala.collection.mutable.Stack
 
-object Interpreter {
-    type Program = IndexedSeq[operator.Operator]
+import horse.core.operator.{Operator, While}
 
-    object Result extends Enumeration {
-        val Success, Crash, InfiniteLoop = Value
-    }
+object Interpreter {
+    type Program = IndexedSeq[Operator]
 }
 
+object Result extends Enumeration {
+    val Success, Crash, InfiniteLoop = Value
+}
+
+import horse.core.fieldstate.DynamicField
 import Interpreter.Program
 
-class Interpreter private (operators: Program, start: program.State) {
-    def this(operators: Program) = this(operators, program.Builder(operators))
+class Interpreter private (operators: Program, start: State) {
+    def this(operators: Program) = this(operators, Builder(operators))
 
-    import Interpreter.Result._
-    type ResultType = Interpreter.Result.Value
+    type ResultType = Result.Value
 
-    def isStopped = current.isInstanceOf[program.TerminalState]
+    def isStopped = current.isInstanceOf[TerminalState]
 
     def currentLine = current.line
 
-    def step(field: FieldState): Boolean = {
-        import program._
-
+    def step(field: DynamicField): Boolean = {
         val res = current match {
             case SimpleState(operator, _, _) => field(operator)
             case _ => true
@@ -69,11 +69,11 @@ class Interpreter private (operators: Program, start: program.State) {
         res
     }
 
-    def run(field: FieldState): ResultType = {
+    def run(field: DynamicField): ResultType = {
         var cycles = 
             operators
                 .zipWithIndex
-                .filter(elem => elem._1.isInstanceOf[operator.While])
+                .filter(elem => elem._1.isInstanceOf[While])
                 .map(elem => (elem._2, 0))
                 .toMap 
 
@@ -82,17 +82,17 @@ class Interpreter private (operators: Program, start: program.State) {
                 cycles.get(current.line) match {
                     case Some(iter) => {
                         if (iter == 1000)
-                            return InfiniteLoop
+                            return Result.InfiniteLoop
                         else 
                             cycles = cycles.updated(current.line, iter + 1)
                     }
                     case _ => ()
                 }
             } else {
-                return Crash
+                return Result.Crash
             }
         }
-        Success
+        Result.Success
     }
 
     def restart() {
@@ -102,6 +102,6 @@ class Interpreter private (operators: Program, start: program.State) {
     def initial = new Interpreter(operators, start)
 
     private[this] var current = start
-    private[this] val stack: Stack[program.ConditionalState] = new Stack
+    private[this] val stack: Stack[ConditionalState] = new Stack
 
 }
