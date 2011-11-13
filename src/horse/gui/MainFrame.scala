@@ -5,7 +5,8 @@ import swing._
 
 import horse.Config
 
-class MainFrame(field: Component, executeMenu: MenuBar, editMenu: MenuBar,
+class MainFrame(editor: Component, field: Component, 
+                executeMenu: MenuBar, editMenu: MenuBar,
                 onEdit: => Unit, onExecute: => Unit) extends scala.swing.MainFrame {
 
     title = "Shperical Horse"
@@ -24,7 +25,7 @@ class MainFrame(field: Component, executeMenu: MenuBar, editMenu: MenuBar,
             add(
                 new ScrollPane(
                     new BorderPanel {
-                        add(Editor, Center)
+                        add(editor, Center)
                     }) {
                         horizontalScrollBarPolicy = ScrollPane.BarPolicy.AsNeeded
                     },

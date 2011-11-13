@@ -9,7 +9,13 @@ import java.awt.Color
 import horse.core.operator._
 import horse.core.program.Interpreter.Program
 
-object Editor extends EditorPane {
+object Editor {
+    object ProgramState extends Enumeration {
+        val Normal, Error, End = Value
+    }
+}
+
+class Editor extends EditorPane {
 
     // Interface
     def program: Program = lines
@@ -71,19 +77,16 @@ object Editor extends EditorPane {
         moveCurrentLine(0) 
     }
 
-    object ProgramState extends Enumeration {
-        val Normal, Error, End = Value
-    }
-
-    def highlightOperator(line: Int, state: ProgramState.Value) {
+    def highlightOperator(line: Int, state: Editor.ProgramState.Value) {
+        import Editor.ProgramState._
         import Document.Background
 
         document.setBackground(currentLine, Background.Default)
         currentLine = line
         document.setBackground(currentLine, state match {
-            case ProgramState.Normal    => Background.Debugged
-            case ProgramState.Error     => Background.Error
-            case ProgramState.End       => Background.Success
+            case Normal    => Background.Debugged
+            case Error     => Background.Error
+            case End       => Background.Success
         })
     }
 

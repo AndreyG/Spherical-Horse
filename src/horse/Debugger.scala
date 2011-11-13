@@ -6,7 +6,7 @@ import core.program.Result.Success
 import gui.{Editor, FieldImage}
 import Editor.ProgramState._
 
-class Debugger(field: DynamicField, image: FieldImage) {
+class Debugger(field: DynamicField, image: FieldImage, editor: Editor) {
     def step() {
         val res = interpreter.step(field)
         val status = {
@@ -20,7 +20,7 @@ class Debugger(field: DynamicField, image: FieldImage) {
         }
         if (res) 
             image.repaint()
-        Editor.highlightOperator(interpreter.currentLine, status)
+        editor.highlightOperator(interpreter.currentLine, status)
     }
 
     def run() {
@@ -32,12 +32,12 @@ class Debugger(field: DynamicField, image: FieldImage) {
             else 
                 Error
         }
-        Editor.highlightOperator(interpreter.currentLine, status)
+        editor.highlightOperator(interpreter.currentLine, status)
     }
 
     def restart() {
         interpreter.restart()
-        Editor.highlightOperator(interpreter.currentLine, Normal)
+        editor.highlightOperator(interpreter.currentLine, Normal)
     } 
 
     private[this] var interpreter: Interpreter = null

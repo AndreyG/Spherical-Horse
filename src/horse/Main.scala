@@ -10,27 +10,30 @@ import core.program.Interpreter
 
 object Main extends SimpleSwingApplication {
 
-    val field = DynamicField.empty
-    val image = new FieldImage(field)
+    val field       = DynamicField.empty
+    val image       = new FieldImage(field)
+
+    val editor      = new Editor
 
     val player      = new Player(field, image)
-    val debugger    = new Debugger(field, image)
+    val debugger    = new Debugger(field, image, editor)
 
-    override def top = new MainFrame (
-        image, 
-        new ExecutionMenu(player, debugger),
-        EditorMenu, 
+    val problem     = new Problem(editor)
+
+    val frame = new MainFrame (
+        editor, image, 
+        new ExecutionMenu(player, debugger, problem), new EditorMenu(editor), 
         {
-            Editor.prepare() 
-            Editor.requestFocus()
+            editor.prepare() 
+            editor.requestFocus()
         },
         {
-            val interpreter = new Interpreter(Editor.program) 
+            val interpreter = new Interpreter(editor.program) 
             debugger.set(interpreter)
-            Problem.set(interpreter)
-            Editor.highlightOperator(0, Editor.ProgramState.Normal)
+            editor.highlightOperator(0, Editor.ProgramState.Normal)
             image.requestFocus()
         }
-    )
+    ) 
 
+    override def top = frame
 }

@@ -13,7 +13,7 @@ import horse.core.operator.{Step, Jump, TurnLeft, TurnRight}
 
 import menu._
 
-class ExecutionMenu(player: Player, debugger: Debugger) extends MenuBar {
+class ExecutionMenu(player: Player, debugger: Debugger, problem: Problem) extends MenuBar {
 
     contents += createMenu("Execute",
         createMenuItem("Step",          simpleKeyStroke(VK_S), player.move(Step)),
@@ -36,12 +36,12 @@ class ExecutionMenu(player: Player, debugger: Debugger) extends MenuBar {
 
     contents += createMenu("Problemset",
         createMenuItem("Create",    ctrlKeyStroke(VK_C), {
-            if (Problem.canSave) {
+            if (problem.canSave) {
                 if (fileChooser.showSaveDialog(this) == Approve) {
-                    Problem.save(fileChooser.selectedFile)
+                    problem.save(fileChooser.selectedFile)
                 }
             } else {
-                JOptionPane.showMessageDialog(this.peer, 
+                JOptionPane.showMessageDialog(peer, 
                     "Erroneous programs are declined to be saved as problems", 
                     "error",
                     JOptionPane.ERROR_MESSAGE
@@ -50,8 +50,8 @@ class ExecutionMenu(player: Player, debugger: Debugger) extends MenuBar {
         }),
         createMenuItem("Load",  ctrlKeyStroke(VK_L), 
             if (fileChooser.showOpenDialog(this) == Approve) {
-                if (!Problem.load(fileChooser.selectedFile)) {
-                    JOptionPane.showMessageDialog(this.peer, 
+                if (!problem.load(fileChooser.selectedFile)) {
+                    JOptionPane.showMessageDialog(peer, 
                         "corruped file", 
                         "error",
                         JOptionPane.ERROR_MESSAGE

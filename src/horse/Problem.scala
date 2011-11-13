@@ -1,15 +1,19 @@
 package horse
 
 import java.io.{File, FileReader, BufferedReader, FileOutputStream, PrintStream}
+import javax.swing.JOptionPane
 
-import core.fieldstate.DynamicField
+import core.fieldstate.{StaticField, DynamicField}
 import core.program.Interpreter
 import core.program.Result.Success
 
-import gui.TaskViewer
+import gui.{Editor, ProblemFrame}
 
-object Problem {
-    def canSave = isCorrect 
+class Problem(editor: Editor) {
+    def canSave: Boolean = {
+        field = DynamicField.empty
+        new Interpreter(editor.program).run(field) == Success
+    }
 
     def save(file: File) {
         val out = new PrintStream(new FileOutputStream(file))
@@ -18,9 +22,16 @@ object Problem {
     }
 
     def load(file: File): Boolean = {
-        val in = new BufferedReader(new FileReader(file)) 
+        var in: BufferedReader = new BufferedReader(new FileReader(file)) 
         try {
-            TaskViewer(serialization.loadField(in))
+            if (frame != null)
+                frame.dispose()
+
+            val etalon = serialization.loadField(in)
+
+            frame = new ProblemFrame(etalon, check(etalon), frame = null)
+            frame.setLocationRelativeTo(Main.frame)
+            frame.visible = true
         } catch {
             case _ => return false
         } finally {
@@ -29,11 +40,17 @@ object Problem {
         true
     }
 
-    def set(interpreter: Interpreter) {
-        field = DynamicField.empty
-        isCorrect = interpreter.initial.run(field) == Success
+    private def check(etalon: StaticField) {
+        val field  = DynamicField.empty
+        val result = new Interpreter(editor.program).run(field)
+
+        if ((result == Success) && etalon.equals(field)) 
+            frame.reportSuccess()
+        else 
+            frame.reportFail()
     }
 
-    private[this] var field = DynamicField.empty
-    private[this] var isCorrect = true
+    private[this] var frame: ProblemFrame = null
+
+    private[this] var field: DynamicField = null
 }

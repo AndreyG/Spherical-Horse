@@ -14,7 +14,7 @@ import horse.gui.Editor
 
 import menu._
 
-object EditorMenu extends MenuBar {
+class EditorMenu(editor: Editor) extends MenuBar {
 
     private[this] val fileChooser = new FileChooser(new File("progs"))
     fileChooser.fileFilter = new FileNameExtensionFilter("Horse programs", "hp")
@@ -24,7 +24,7 @@ object EditorMenu extends MenuBar {
             if (fileChooser.showOpenDialog(this) == Approve) {
                 val in = new BufferedReader(new FileReader(fileChooser.selectedFile)) 
                 try {
-                    Editor.program = serialization.loadProgram(in)
+                    editor.program = serialization.loadProgram(in)
                 } catch {
                     case _ => JOptionPane.showMessageDialog(this.peer, 
                         "corruped file", 
@@ -39,22 +39,22 @@ object EditorMenu extends MenuBar {
         createMenuItem("Save", ctrlKeyStroke(VK_S), {
             if (fileChooser.showSaveDialog(this) == Approve) {
                 val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
-                serialization.dumpProgram(Editor.program, out) 
+                serialization.dumpProgram(editor.program, out) 
                 out.close()
             }
         })
     )
 
     contents += createMenu("Operator",
-        createMenuItem("Step",          simpleKeyStroke(VK_S), Editor.step()),
-        createMenuItem("Jump",          simpleKeyStroke(VK_J), Editor.jump()),
-        createMenuItem("Turn left",     simpleKeyStroke(VK_L), Editor.turnLeft()),
-        createMenuItem("Turn right",    simpleKeyStroke(VK_R), Editor.turnRight()),
+        createMenuItem("Step",          simpleKeyStroke(VK_S), editor.step()),
+        createMenuItem("Jump",          simpleKeyStroke(VK_J), editor.jump()),
+        createMenuItem("Turn left",     simpleKeyStroke(VK_L), editor.turnLeft()),
+        createMenuItem("Turn right",    simpleKeyStroke(VK_R), editor.turnRight()),
         new Separator,
-        createMenuItem("If",            simpleKeyStroke(VK_I), Editor.createIf()),
-        createMenuItem("Else",          simpleKeyStroke(VK_E), Editor.createElse()),
-        createMenuItem("While",         simpleKeyStroke(VK_W), Editor.createWhile()),
+        createMenuItem("If",            simpleKeyStroke(VK_I), editor.createIf()),
+        createMenuItem("Else",          simpleKeyStroke(VK_E), editor.createElse()),
+        createMenuItem("While",         simpleKeyStroke(VK_W), editor.createWhile()),
         new Separator,
-        createMenuItem("Not",           simpleKeyStroke(VK_N), Editor.inverse())
+        createMenuItem("Not",           simpleKeyStroke(VK_N), editor.inverse())
     )
 }

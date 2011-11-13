@@ -1,6 +1,6 @@
 package horse.core.fieldstate
 
-import scala.collection.mutable.{Set, HashSet}
+import scala.collection.mutable.Set
 
 import horse.core.operator._
 
@@ -75,7 +75,7 @@ class DynamicField private (width: Int, height: Int) extends Field(width, height
 
     private[this] var pos                   = initialPos
     private[this] var direction             = initialDir
-    private[this] val show: Set[(Pos, Pos)] = new HashSet
+    private[this] val show: Set[(Pos, Pos)] = Set.empty
 }
 
 
