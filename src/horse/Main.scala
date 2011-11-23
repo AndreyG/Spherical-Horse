@@ -2,8 +2,10 @@ package horse
 
 import swing.SimpleSwingApplication
 
-import gui.{FieldImage, Editor, MainFrame}
+import gui.{FieldImage, MainFrame}
 import gui.menu.{EditorMenu, ExecutionMenu}
+
+import programtext.ProgramText
 
 import core.fieldstate.DynamicField
 import core.program.Interpreter
@@ -13,24 +15,29 @@ object Main extends SimpleSwingApplication {
     val field       = DynamicField.empty
     val image       = new FieldImage(field)
 
-    val editor      = new Editor
+    val text        = new ProgramText
+
+    val editor      = text.getEditor
+    val textPane    = text.getPane
+    val highlightor = text.getHighlightor
 
     val player      = new Player(field, image)
-    val debugger    = new Debugger(field, image, editor)
+    val debugger    = new Debugger(field, image, highlightor)
 
-    val problem     = new Problem(editor)
+    val problem     = new Problem(text)
 
     val frame = new MainFrame (
-        editor, image, 
-        new ExecutionMenu(player, debugger, problem), new EditorMenu(editor), 
+        textPane, image, 
+        new ExecutionMenu(player, debugger, problem), new EditorMenu(text, editor), 
         {
-            editor.prepare() 
-            editor.requestFocus()
+            highlightor.release()
+            editor.prepare()
+            textPane.requestFocus()
         },
         {
-            val interpreter = new Interpreter(editor.program) 
-            debugger.set(interpreter)
-            editor.highlightOperator(0, Editor.ProgramState.Normal)
+            editor.release()
+            highlightor.prepare()
+            debugger.set(new Interpreter(text.program))
             image.requestFocus()
         }
     ) 

@@ -3,16 +3,49 @@ package horse.core.program
 import horse.core.operator._
 
 abstract class State {
-    val line: Int
+    val procIdx: Int 
 }
-abstract class ConditionalState(line: Int) extends State 
 
-sealed case class StartState(next: State) extends State {
-    override val line = 0
+sealed case class StartState(procIdx: Int) extends State {
+    var next: State = null
 }
-sealed case class TerminalState(line: Int) extends State
-sealed case class SimpleState(operator: SimpleOperator, line: Int, next: State) extends State
-sealed case class IfState(c: Condition.Value, line: Int, body: State, next: State) extends ConditionalState(line)
-sealed case class IfElseState(c: Condition.Value, line: Int, trueBranch: State, falseBranch: State, next: State) extends ConditionalState(line) 
-sealed case class WhileState(c: Condition.Value, line: Int, body: State, next: State) extends ConditionalState(line)
-sealed case class EndState(line: Int) extends State
+
+sealed case class TerminalState(procIdx: Int) extends State
+
+sealed abstract class OperatorState extends State {
+    val line: Int
+} 
+
+sealed case class SimpleState(  procIdx: Int, 
+                                line: Int, 
+                                operator: SimpleOperator, 
+                                next: State ) extends OperatorState 
+
+sealed abstract class ConditionalState extends OperatorState 
+
+sealed case class IfState    (  procIdx: Int, 
+                                line: Int, 
+                                condition: Condition.Value, 
+                                body: State, 
+                                next: State ) extends ConditionalState
+
+sealed case class IfElseState(  procIdx: Int, 
+                                line: Int, 
+                                condition: Condition.Value, 
+                                trueBranch: State, 
+                                falseBranch: State, 
+                                next: State ) extends ConditionalState 
+
+sealed case class WhileState (  procIdx: Int, 
+                                line: Int,
+                                condition: Condition.Value, 
+                                body: State,
+                                next: State ) extends ConditionalState 
+
+sealed case class EndState   (  procIdx: Int,
+                                line: Int   ) extends OperatorState
+
+sealed case class CallState  (  procIdx: Int,
+                                line: Int, 
+                                body: StartState,
+                                next: State ) extends OperatorState

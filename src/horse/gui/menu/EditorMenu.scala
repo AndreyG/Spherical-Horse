@@ -10,39 +10,35 @@ import javax.swing.filechooser.FileNameExtensionFilter
 import FileChooser.Result.Approve
 
 import horse.serialization
-import horse.gui.Editor
+import horse.programtext.{IProgramText, IEditor}
 
 import menu._
 
-class EditorMenu(editor: Editor) extends MenuBar {
+class EditorMenu(text: IProgramText, editor: IEditor) extends MenuBar {
 
     private[this] val fileChooser = new FileChooser(new File("progs"))
     fileChooser.fileFilter = new FileNameExtensionFilter("Horse programs", "hp")
 
     contents += createMenu("File",
-        createMenuItem("Load", ctrlKeyStroke(VK_L), {
+        createMenuItem("Load",          ctrlKeyStroke(VK_L), 
             if (fileChooser.showOpenDialog(this) == Approve) {
                 val in = new BufferedReader(new FileReader(fileChooser.selectedFile)) 
                 try {
-                    editor.program = serialization.loadProgram(in)
+                    text.program = serialization.loadProgram(in)
                 } catch {
-                    case _ => JOptionPane.showMessageDialog(this.peer, 
-                        "corruped file", 
-                        "error",
-                        JOptionPane.ERROR_MESSAGE
-                    )
+                    case _ => showError("corrupted file")
                 } finally {
                     in.close()
                 }
             }
-        }),
-        createMenuItem("Save", ctrlKeyStroke(VK_S), {
+        ),
+        createMenuItem("Save",          ctrlKeyStroke(VK_S), 
             if (fileChooser.showSaveDialog(this) == Approve) {
                 val out = new PrintStream(new FileOutputStream(fileChooser.selectedFile))
-                serialization.dumpProgram(editor.program, out) 
+                serialization.dumpProgram(text.program, out) 
                 out.close()
             }
-        })
+        )
     )
 
     contents += createMenu("Operator",
@@ -57,4 +53,31 @@ class EditorMenu(editor: Editor) extends MenuBar {
         new Separator,
         createMenuItem("Not",           simpleKeyStroke(VK_N), editor.inverse())
     )
+
+    contents += createMenu("Procedure",
+        createMenuItem("New",           ctrlKeyStroke(VK_N), {
+            val procName = JOptionPane.showInputDialog(text.getPane.peer, "Procedure name")
+            if (procName != null) {
+                if (text.getProcNames.indexOf(procName) == -1) {
+                    text.addProcedure(procName)
+                } else {
+                    showError("duplicated procedure name")
+                }
+            }
+        }),
+        createMenuItem("Call",          simpleKeyStroke(VK_C), {
+            val procName = JOptionPane.showInputDialog (
+                text.getPane.peer, "Procedure name",
+                "Select procedure name", JOptionPane.QUESTION_MESSAGE, null, 
+                text.getProcNames.toArray, null
+            )
+            if (procName != null) {
+                editor.createCall(procName.asInstanceOf[String])
+            }
+        })
+    )
+
+    private def showError(err: String) {
+        JOptionPane.showMessageDialog(peer, err, "error", JOptionPane.ERROR_MESSAGE)
+    }
 }

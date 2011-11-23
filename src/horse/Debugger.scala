@@ -3,10 +3,13 @@ package horse
 import core.fieldstate.DynamicField
 import core.program.Interpreter
 import core.program.Result.Success
-import gui.{Editor, FieldImage}
-import Editor.ProgramState._
+import gui.FieldImage
+import programtext.IHighlightor
 
-class Debugger(field: DynamicField, image: FieldImage, editor: Editor) {
+
+class Debugger(field: DynamicField, image: FieldImage, highlightor: IHighlightor) {
+    import highlightor.ProgramState._
+
     def step() {
         val res = interpreter.step(field)
         val status = {
@@ -20,7 +23,9 @@ class Debugger(field: DynamicField, image: FieldImage, editor: Editor) {
         }
         if (res) 
             image.repaint()
-        editor.highlightOperator(interpreter.currentLine, status)
+
+        val (procIdx, line) = interpreter.currentOperator
+        highlightor(procIdx, line, status)
     }
 
     def run() {
@@ -32,12 +37,14 @@ class Debugger(field: DynamicField, image: FieldImage, editor: Editor) {
             else 
                 Error
         }
-        editor.highlightOperator(interpreter.currentLine, status)
+        val (procIdx, line) = interpreter.currentOperator
+        highlightor(procIdx, line, status)
     }
 
     def restart() {
         interpreter.restart()
-        editor.highlightOperator(interpreter.currentLine, Normal)
+        val (procIdx, line) = interpreter.currentOperator
+        highlightor(procIdx, line, Normal)
     } 
 
     private[this] var interpreter: Interpreter = null

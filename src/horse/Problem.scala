@@ -7,12 +7,13 @@ import core.fieldstate.{StaticField, DynamicField}
 import core.program.Interpreter
 import core.program.Result.Success
 
-import gui.{Editor, ProblemFrame}
+import gui.ProblemFrame
+import programtext.IProgramText
 
-class Problem(editor: Editor) {
+class Problem(text: IProgramText) {
     def canSave: Boolean = {
         field = DynamicField.empty
-        new Interpreter(editor.program).run(field) == Success
+        new Interpreter(text.program).run(field) == Success
     }
 
     def save(file: File) {
@@ -42,7 +43,7 @@ class Problem(editor: Editor) {
 
     private def check(etalon: StaticField) {
         val field  = DynamicField.empty
-        val result = new Interpreter(editor.program).run(field)
+        val result = new Interpreter(text.program).run(field)
 
         if ((result == Success) && etalon.equals(field)) 
             frame.reportSuccess()

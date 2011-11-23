@@ -1,11 +1,14 @@
-ProgramBegin
+main
+TurnRight
 while empty
+call terrace
+End
+TurnLeft
+Step
+
+terrace
+TurnLeft
 Step
 TurnRight
-if empty
 Step
-TurnLeft
-End
-End
-TurnLeft
-ProgramEnd
+

@@ -1,4 +1,4 @@
-ProgramBegin
+main
 while empty
 Step
 TurnRight
@@ -9,4 +9,4 @@ TurnLeft
 End
 End
 TurnLeft
-ProgramEnd
+

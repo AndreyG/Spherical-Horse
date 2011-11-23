@@ -5,26 +5,36 @@ import scala.collection.mutable.{Buffer, ArrayBuffer}
 import java.io.{BufferedReader, PrintStream}
 
 import core.operator.Operator
-import core.program.Interpreter.Program
+import core.program.Interpreter.{Procedure, Program}
 import core.fieldstate.{Field, StaticField}
 import core.fieldstate.Horse.Pos
 
 package object serialization {
 
     def dumpProgram(program: Program, out: PrintStream) {
-        for (line <- program) {
-            out.println(OperatorSerializer.toString(line))
+        for (proc <- program) {
+            out.println(proc.name)
+            for (op <- proc.operators) {
+                out.println(OperatorSerializer.toString(op))
+            }    
+            out.println()
         }
     }
 
-    def loadProgram(in: BufferedReader) = {
-        val buffer: Buffer[Operator] = new ArrayBuffer
-        var s = in.readLine
-        while (s != null) {
-            buffer += OperatorSerializer.fromString(s)
-            s = in.readLine
+    def loadProgram(in: BufferedReader): Program = {
+        val prog: Buffer[Procedure] = new ArrayBuffer
+        var procName = in.readLine
+        while (procName != null) {
+            val operators: Buffer[Operator] = new ArrayBuffer
+            var s = in.readLine
+            while (s != "") {
+                operators += OperatorSerializer.fromString(s)
+                s = in.readLine
+            }
+            prog += new Procedure(procName, operators.toIndexedSeq) 
+            procName = in.readLine
         }
-        buffer.toIndexedSeq
+        prog.toIndexedSeq
     }
 
     def dumpField(field: Field, out: PrintStream) {

@@ -5,7 +5,8 @@ import scala.collection.mutable.Stack
 import horse.core.operator.{Operator, While}
 
 object Interpreter {
-    type Program = IndexedSeq[Operator]
+    class Procedure(val name: String, val operators: IndexedSeq[Operator]) 
+    type Program = IndexedSeq[Procedure]
 }
 
 object Result extends Enumeration {
@@ -15,76 +16,107 @@ object Result extends Enumeration {
 import horse.core.fieldstate.DynamicField
 import Interpreter.Program
 
-class Interpreter private (operators: Program, start: State) {
-    def this(operators: Program) = this(operators, Builder(operators))
+class Interpreter private (program: Program, start: State) {
+    def this(program: Program) = this(program, Builder(program))
 
     type ResultType = Result.Value
 
-    def isStopped = current.isInstanceOf[TerminalState]
+    def isStopped = current match {
+        case TerminalState(0) => procStack.isEmpty
+        case _ => false
+    }
 
-    def currentLine = current.line
+    def currentOperator = current match {
+        case StartState(procIdx)    => (procIdx, 0)
+        case TerminalState(procIdx) => (procIdx, program(procIdx).operators.length + 1)
+        case op: OperatorState      => (op.procIdx, op.line)
+    }
 
     def step(field: DynamicField): Boolean = {
         val res = current match {
-            case SimpleState(operator, _, _) => field(operator)
+            case SimpleState(_, _, operator, _) => field(operator)
             case _ => true
         }
         current match {
-            case TerminalState(_) => ()
-            case StartState(next) => current = next
-            case EndState(_) => {
-                val st = stack.top
-                st match {
-                    case st: IfState        => stack.pop(); current = st.next
-                    case st: IfElseState    => stack.pop(); current = st.next
+            case st: StartState     => {
+                current = st.next
+            }
+            case _: TerminalState   => {
+                if (!procStack.isEmpty) {
+                    current = procStack.top.next
+                    procStack.pop
+                }
+            }
+            case _: EndState => {
+                opStack.top match {
+                    case st: IfState        => opStack.pop(); current = st.next
+                    case st: IfElseState    => opStack.pop(); current = st.next
                     case st: WhileState     => current = st
                 }
             }
-            case SimpleState(_, _, next) => if (res) current = next 
-            case IfState(c, _, body, next) => {
-                if (field(c)) {
-                    stack.push(current.asInstanceOf[IfState])
-                    current = body
+            case st: SimpleState => {
+                if (res) 
+                    current = st.next 
+            }
+            case st: IfState => {
+                if (field(st.condition)) {
+                    opStack.push(st)
+                    current = st.body
                 } else {
-                    current = next
+                    current = st.next
                 }
             }
-            case IfElseState(c, _, trueBranch, falseBranch, _) => {
-                stack.push(current.asInstanceOf[IfElseState])
-                if (field(c)) {
-                    current = trueBranch
+            case st: IfElseState => {
+                opStack.push(st)
+                current = 
+                    if (field(st.condition)) 
+                        st.trueBranch
+                    else 
+                        st.falseBranch
+            }
+            case st: WhileState => {
+                if (field(st.condition)) {
+                    opStack.push(st)
+                    current = st.body
                 } else {
-                    current = falseBranch
+                    current = st.next
                 }
             }
-            case WhileState(c, _, body, next) => {
-                if (field(c)) {
-                    stack.push(current.asInstanceOf[WhileState])
-                    current = body
-                } else {
-                    current = next
-                }
+            case st: CallState => {
+                procStack.push(st)
+                current = st.body
             }
         }
         res
     }
 
     def run(field: DynamicField): ResultType = {
-        var cycles = 
-            operators
-                .zipWithIndex
-                .filter(elem => elem._1.isInstanceOf[While])
-                .map(elem => (elem._2, 0))
-                .toMap 
+        val cycles = 
+            program.map {
+                _.operators
+                    .zipWithIndex
+                    .filter(elem => elem._1.isInstanceOf[While])
+                    .map(elem => (elem._2 + 1, 0))
+                    .toMap 
+            }.toArray
+
+        val procedures: Array[Int] = Array.ofDim(program.length)
 
         while (!isStopped) {
             if (step(field)) {
-                cycles.get(current.line) match {
-                    case Some(iter) => {
+                if (current.isInstanceOf[StartState]) {
+                    if (procedures(current.procIdx) == 1000)
+                        return Result.InfiniteLoop
+                    else
+                        procedures(current.procIdx) = procedures(current.procIdx) + 1
+                } else current match {
+                    case WhileState(procIdx, line, _, _, _) => {
+                        val procCycles = cycles(procIdx)
+                        val iter = procCycles(line) 
                         if (iter == 1000)
                             return Result.InfiniteLoop
                         else 
-                            cycles = cycles.updated(current.line, iter + 1)
+                            cycles(procIdx) = procCycles.updated(line, iter + 1)
                     }
                     case _ => ()
                 }
@@ -99,9 +131,9 @@ class Interpreter private (operators: Program, start: State) {
         current = start
     }
 
-    def initial = new Interpreter(operators, start)
+    def initial = new Interpreter(program, start)
 
     private[this] var current = start
-    private[this] val stack: Stack[ConditionalState] = new Stack
-
+    private[this] val opStack:      Stack[ConditionalState] = new Stack
+    private[this] val procStack:    Stack[CallState]        = new Stack
 }

@@ -1,8 +1,11 @@
-ProgramBegin
+main
 while empty
+call terrace
+End
+
+terrace
 Step
 TurnRight
 Step
 TurnLeft
-End
-ProgramEnd
+

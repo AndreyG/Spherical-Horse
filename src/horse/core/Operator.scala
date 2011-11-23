@@ -24,5 +24,4 @@ sealed case class While(c: Condition.Value) extends ConditionalOperator
 
 case object End extends Operator 
 
-case object ProgramBegin extends Operator
-case object ProgramEnd extends Operator
+sealed case class Call(name: String) extends Operator

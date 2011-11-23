@@ -1,8 +1,8 @@
-ProgramBegin
+main
 while empty
 Step
-TurnRight
-Step
+if wall
 TurnRight
 End
-ProgramEnd
+End
+
