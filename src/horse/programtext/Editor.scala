@@ -186,7 +186,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
     private def removeOperator(procedure: Buffer[Line]) {
         var baseLine = 1
         for (i <- 0 until procIdx) {
-            baseLine += prog(procIdx).lines.size + 3
+            baseLine += prog(i).lines.size + 3
         }
 
         def insert(idx: Int, indent: Int, op: Operator) {
