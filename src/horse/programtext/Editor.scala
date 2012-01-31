@@ -7,19 +7,43 @@ import horse.core.operator._
 
 class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
 
-    // Interface 
+    // Interface
+    
+    override def add(a: editor.Action) {
+        a match {
+            case editor.Step => addOperators(Step)
+            case editor.Jump => addOperators(Jump)
+            case editor.Left => addOperators(TurnLeft)
+            case editor.Right => addOperators(TurnRight)
+            case editor.If => addOperators(If(Condition.wall), End)
+            case editor.Else => createElse()
+            case editor.While => addOperators(While(Condition.empty), End)
+            case editor.Inverse => inverse()
+            case editor.Call(procName) => addOperators(Call(procName))
+            case editor.Up => up()
+            case editor.Down => down()
+            case editor.Delete => removeLine()
+        }
+    }
 
-    override def step()          { addOperators(Step)      }
-    override def jump()          { addOperators(Jump)      }
-    override def turnLeft()      { addOperators(TurnLeft)  }
-    override def turnRight()     { addOperators(TurnRight) }
+    override def prepare() {
+        document.setBackground(currentLine, Document.Background.Selected)
+    }
 
-    override def createIf()      { addOperators(If(Condition.wall),     End) }
-    override def createWhile()   { addOperators(While(Condition.empty), End) }
+    override def release() {
+        document.setBackground(currentLine, Document.Background.Default)
+    }
 
-    override def createCall(procName: String) { addOperators(Call(procName)) }
+    // Method for ProgramText
 
-    override def createElse() {
+    private[programtext] def moveToBegin() {
+        moveCurrentLine(0, 0)
+    }
+
+    // Private methods
+    import Document.Background
+
+    private def createElse() {
         val procedure = prog(procIdx).lines
 
         if ((lineIdx != 0) && (lineIdx - 1 != procedure.length)) {
@@ -40,7 +64,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         }
     }
 
-    override def inverse() {
+    private def inverse() {
         val proc = prog(procIdx).lines
         if ((lineIdx != 0) && (lineIdx - 1 != proc.size)) {
             val line = proc(lineIdx - 1)
@@ -64,17 +88,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         }
     }
 
-    override def prepare() {
-        document.setBackground(currentLine, Document.Background.Selected)
-    }
-
-    override def release() {
-        document.setBackground(currentLine, Document.Background.Default)
-    }
-
-    // Methods for ProgramText
-
-    private[programtext] def up() {
+    private def up() {
         if (lineIdx == 0) {
             if (procIdx != 0) {
                 moveCurrentLine(prog(procIdx - 1).lines.length, procIdx - 1)
@@ -84,7 +98,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         }
     }
 
-    private[programtext] def down() {
+    private def down() {
         if (lineIdx == prog(procIdx).lines.length) {
             if (procIdx + 1 != prog.size)
                 moveCurrentLine(0, procIdx + 1)
@@ -93,11 +107,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         }
     }
 
-    private[programtext] def moveToBegin() {
-        moveCurrentLine(0, 0)
-    }
-
-    private[programtext] def removeLine() {
+    private def removeLine() {
         if ((lineIdx == 0) || (lineIdx - 1 == prog(procIdx).lines.length)) {
             if (procIdx != 0) {
                 removeProcedure()
@@ -106,9 +116,6 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
             removeOperator(prog(procIdx).lines)
         }
     }
-
-    // Private methods
-    import Document.Background
 
     private def addOperators(ops: Operator*) {
         val globalLine = currentLine
@@ -201,9 +208,9 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
 
         def findCorrespondingOperator(delta: Int) = {
             var i = lineIdx - 1 + delta
-            val indent = procedure(lineIdx - 1).indent 
+            val indent = procedure(lineIdx - 1).indent
             while (procedure(i).indent != indent) {
-                procedure(i) = new Line(indent - 1, procedure(i).operator)
+                procedure(i).indent -= 1
                 document.shift(baseLine + i)
                 i += delta
             }

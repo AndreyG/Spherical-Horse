@@ -15,20 +15,18 @@ object Main extends SimpleSwingApplication {
     val field       = DynamicField.empty
     val image       = new FieldImage(field)
 
-    val text        = new ProgramText
-
-    val editor      = text.getEditor
-    val textPane    = text.getPane
-    val highlightor = text.getHighlightor
+    val editor      = ProgramText.getEditor
+    val textPane    = ProgramText.getPane
+    val highlightor = ProgramText.getHighlightor
 
     val player      = new Player(field, image)
     val debugger    = new Debugger(field, image, highlightor)
 
-    val problem     = new Problem(text)
+    val problem     = new Problem(ProgramText)
 
     val frame = new MainFrame (
         textPane, image, 
-        new ExecutionMenu(player, debugger, problem), new EditorMenu(text, editor), 
+        new ExecutionMenu(player, debugger, problem), new EditorMenu(ProgramText, editor),
         {
             highlightor.release()
             editor.prepare()
@@ -37,7 +35,7 @@ object Main extends SimpleSwingApplication {
         {
             editor.release()
             highlightor.prepare()
-            debugger.set(new Interpreter(text.program))
+            debugger.set(new Interpreter(ProgramText.program))
             image.requestFocus()
         }
     ) 

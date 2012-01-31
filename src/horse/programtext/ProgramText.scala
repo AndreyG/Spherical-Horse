@@ -1,19 +1,23 @@
 package horse.programtext
 
+import java.io.{PrintStream, FileOutputStream, File}
+
 import scala.collection.mutable.{Buffer, ArrayBuffer}
 import scala.swing.event.Key
+import scala.swing.FileChooser
 
 import horse.gui.{TextPane, Document}
 import horse.core.operator.{Operator, ConditionalOperator, Else, End}
 import horse.core.program.Interpreter.{Procedure => IProcedure, Program}
+import horse.programtext.editor._
 
-class Line(val indent: Int, val operator: Operator)
+class Line(var indent: Int, val operator: Operator)
 
 class Procedure(val name: String) {
     val lines: Buffer[Line] = new ArrayBuffer
 }
 
-class ProgramText extends IProgramText {
+object ProgramText extends IProgramText {
     
     // Interface
     override def getPane        = pane
@@ -96,7 +100,23 @@ class ProgramText extends IProgramText {
     prog += new Procedure("main")
     printProgram()
 
-    pane.addKeyListener(Key.Up,     editor.up())
-    pane.addKeyListener(Key.Down,   editor.down())
-    pane.addKeyListener(Key.Delete, editor.removeLine())
+    private def addKeyListener(key: Key.Value, a: Action) {
+        pane.addKeyListener(key, {
+            Protocol.log(a)
+            editor.add(a)
+        })
+    }
+
+    addKeyListener(Key.Up,      Up    )
+    addKeyListener(Key.Down,    Down  )
+    addKeyListener(Key.Delete,  Delete)
+
+    pane.addKeyListener(Key.D, {
+        val chooser = new FileChooser(new File("."))
+        if (chooser.showSaveDialog(pane) == FileChooser.Result.Approve) {
+            val out = new PrintStream(new FileOutputStream(chooser.selectedFile))
+            Protocol.dump(out)
+            out.close()
+        }
+    })
 }
