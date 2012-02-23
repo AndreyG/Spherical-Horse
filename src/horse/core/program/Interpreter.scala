@@ -44,15 +44,16 @@ class Interpreter private (program: Program, start: State) {
             case _: TerminalState   => {
                 if (!procStack.isEmpty) {
                     current = procStack.top.next
-                    procStack.pop
+                    procStack.pop()
                 }
             }
             case _: EndState => {
                 opStack.top match {
-                    case st: IfState        => opStack.pop(); current = st.next
-                    case st: IfElseState    => opStack.pop(); current = st.next
+                    case st: IfState        => current = st.next
+                    case st: IfElseState    => current = st.next
                     case st: WhileState     => current = st
                 }
+		opStack.pop(); 	
             }
             case st: SimpleState => {
                 if (res) 
