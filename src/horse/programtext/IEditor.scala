@@ -19,7 +19,7 @@ package editor {
 }
 
 trait IEditor {
-    def add(a: editor.Action)
+    def exec(a: editor.Action)
 
     def prepare()
     def release()

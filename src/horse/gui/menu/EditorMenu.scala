@@ -13,6 +13,7 @@ import horse.serialization
 
 import menu._
 import horse.programtext.{Protocol, IProgramText, IEditor}
+import horse.core.program.Interpreter
 
 class EditorMenu(text: IProgramText, editor: IEditor) extends MenuBar {
 
@@ -47,7 +48,7 @@ class EditorMenu(text: IProgramText, editor: IEditor) extends MenuBar {
 
     private def exec(a: Action) {
         Protocol.log(a)
-        editor.add(a)
+        editor.exec(a)
     }
 
     contents += createMenu("Operator",
@@ -84,6 +85,24 @@ class EditorMenu(text: IProgramText, editor: IEditor) extends MenuBar {
             if (procName != null) {
                 exec(Call(procName.asInstanceOf[String]))
             }
+        })
+    )
+
+    contents += createMenu("Edit",
+        createMenuItem("Line Up",           simpleKeyStroke(VK_UP),     exec(Up)),
+        createMenuItem("Line Down",         simpleKeyStroke(VK_DOWN),   exec(Down)),
+        createMenuItem("Delete Line",       simpleKeyStroke(VK_DELETE), exec(Delete)),
+        createMenuItem("Delete Program",    ctrlKeyStroke(VK_DELETE),   {
+            text.program = Interpreter.emptyProgram
+        }),
+        new Separator,
+        createMenuItem("Dump", ctrlKeyStroke(VK_D), {
+          val chooser = new FileChooser(new File("."))
+          if (chooser.showSaveDialog(this) == FileChooser.Result.Approve) {
+              val out = new PrintStream(new FileOutputStream(chooser.selectedFile))
+              Protocol.dump(out)
+              out.close()
+          }
         })
     )
 

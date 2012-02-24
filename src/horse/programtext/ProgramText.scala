@@ -8,7 +8,7 @@ import scala.swing.FileChooser
 
 import horse.gui.{TextPane, Document}
 import horse.core.operator.{Operator, ConditionalOperator, Else, End}
-import horse.core.program.Interpreter.{Procedure => IProcedure, Program}
+import horse.core.program.Interpreter.{Procedure => IProcedure, Program, emptyProgram}
 import horse.programtext.editor._
 
 class Line(var indent: Int, val operator: Operator)
@@ -97,26 +97,6 @@ object ProgramText extends IProgramText {
     private[this] val editor        = new Editor(prog, document)
 
     // Constructor
-    prog += new Procedure("main")
+    program = emptyProgram 
     printProgram()
-
-    private def addKeyListener(key: Key.Value, a: Action) {
-        pane.addKeyListener(key, {
-            Protocol.log(a)
-            editor.add(a)
-        })
-    }
-
-    addKeyListener(Key.Up,      Up    )
-    addKeyListener(Key.Down,    Down  )
-    addKeyListener(Key.Delete,  Delete)
-
-    pane.addKeyListener(Key.D, {
-        val chooser = new FileChooser(new File("."))
-        if (chooser.showSaveDialog(pane) == FileChooser.Result.Approve) {
-            val out = new PrintStream(new FileOutputStream(chooser.selectedFile))
-            Protocol.dump(out)
-            out.close()
-        }
-    })
 }

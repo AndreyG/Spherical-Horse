@@ -7,6 +7,8 @@ import horse.core.operator.{Operator, While}
 object Interpreter {
     class Procedure(val name: String, val operators: IndexedSeq[Operator]) 
     type Program = IndexedSeq[Procedure]
+
+    def emptyProgram = Array(new Procedure("main", List().toIndexedSeq))
 }
 
 object Result extends Enumeration {

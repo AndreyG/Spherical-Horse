@@ -12,23 +12,7 @@ class TextPane extends EditorPane {
 
     background = Color.darkGray
     editable = false
-    focusable = true
-
-    listenTo(keys)
-    reactions += {
-        case e: KeyPressed => {
-            actions.get(e.key) match {
-                case Some(action) => action()
-                case _ => ()
-            }
-        }
-    }
+    focusable = false
 
     def document = peer.getDocument.asInstanceOf[StyledDocument]
-
-    def addKeyListener(key: Key.Value, action: => Unit) {
-        actions(key) = () => action
-    }
-    
-    private[this] val actions: Map[Key.Value, () => Unit] = new HashMap
 }

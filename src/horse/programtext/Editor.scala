@@ -9,7 +9,7 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
 
     // Interface
     
-    override def add(a: editor.Action) {
+    override def exec(a: editor.Action) {
         a match {
             case editor.Step => addOperators(Step)
             case editor.Jump => addOperators(Jump)
@@ -20,8 +20,8 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
             case editor.While => addOperators(While(Condition.empty), End)
             case editor.Inverse => inverse()
             case editor.Call(procName) => addOperators(Call(procName))
-            case editor.Up => up()
-            case editor.Down => down()
+            case editor.Up     => up()
+            case editor.Down   => down()
             case editor.Delete => removeLine()
         }
     }
