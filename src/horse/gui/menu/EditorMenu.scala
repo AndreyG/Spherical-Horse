@@ -89,10 +89,16 @@ class EditorMenu(text: IProgramText, editor: IEditor) extends MenuBar {
     )
 
     contents += createMenu("Edit",
-        createMenuItem("Line Up",           simpleKeyStroke(VK_UP),     exec(Up)),
-        createMenuItem("Line Down",         simpleKeyStroke(VK_DOWN),   exec(Down)),
-        createMenuItem("Delete Line",       simpleKeyStroke(VK_DELETE), exec(Delete)),
-        createMenuItem("Delete Program",    ctrlKeyStroke(VK_DELETE),   {
+        createMenuItem("Line Up",           simpleKeyStroke(VK_UP),         exec(Up)),
+        createMenuItem("Line Down",         simpleKeyStroke(VK_DOWN),       exec(Down)),
+        createMenuItem("Prev Procudure",    simpleKeyStroke(VK_PAGE_UP),    exec(PrevProc)),
+        createMenuItem("Next Procedure",    simpleKeyStroke(VK_PAGE_DOWN),  exec(NextProc)),
+        createMenuItem("Procudure Begin",   simpleKeyStroke(VK_HOME),       exec(ProcBegin)),
+        createMenuItem("Procudure End",     simpleKeyStroke(VK_END),        exec(ProcEnd)),
+        createMenuItem("Program Begin",     ctrlKeyStroke(VK_HOME),         exec(ProgBegin)),
+        createMenuItem("Program End",       ctrlKeyStroke(VK_END),          exec(ProgEnd)),
+        createMenuItem("Delete Line",       simpleKeyStroke(VK_DELETE),     exec(Delete)),
+        createMenuItem("Delete Program",    ctrlKeyStroke(VK_DELETE),       {
             text.program = Interpreter.emptyProgram
         }),
         new Separator,

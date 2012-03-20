@@ -20,8 +20,14 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
             case editor.While => addOperators(While(Condition.empty), End)
             case editor.Inverse => inverse()
             case editor.Call(procName) => addOperators(Call(procName))
-            case editor.Up     => up()
-            case editor.Down   => down()
+            case editor.Up          => up()
+            case editor.Down        => down()
+            case editor.PrevProc    => prevProc()
+            case editor.NextProc    => nextProc()
+            case editor.ProcBegin   => moveCurrentLine(0)
+            case editor.ProcEnd     => moveCurrentLine(prog(procIdx).lines.length)
+            case editor.ProgBegin   => moveCurrentLine(0, 0)
+            case editor.ProgEnd     => moveCurrentLine(prog.last.lines.size, prog.size - 1)
             case editor.Delete => removeLine()
         }
     }
@@ -100,6 +106,11 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         }
     }
 
+    private def prevProc() {
+        if (procIdx != 0) 
+            moveCurrentLine(math.min(prog(procIdx - 1).lines.length, lineIdx), procIdx - 1)
+    }
+
     private def down() {
         if (lineIdx == prog(procIdx).lines.length) {
             if (procIdx + 1 != prog.size)
@@ -107,6 +118,11 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
         } else {
             moveCurrentLine(lineIdx + 1)
         }
+    }
+
+    private def nextProc() {
+        if (procIdx + 1 != prog.size)
+            moveCurrentLine(math.min(prog(procIdx + 1).lines.length, lineIdx), procIdx + 1)
     }
 
     private def removeLine() {

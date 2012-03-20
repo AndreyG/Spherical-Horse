@@ -15,6 +15,12 @@ package editor {
     sealed case class NewProc(procName: String) extends Action
     case object Up extends Action
     case object Down extends Action
+    case object PrevProc extends Action
+    case object NextProc extends Action
+    case object ProcBegin extends Action
+    case object ProcEnd extends Action
+    case object ProgBegin extends Action
+    case object ProgEnd extends Action
     case object Delete extends Action
 }
 
