@@ -37,7 +37,9 @@ class Editor(prog: Buffer[Procedure], document: IDocument) extends IEditor {
     // Method for ProgramText
 
     private[programtext] def moveToBegin() {
-        moveCurrentLine(0, 0)
+        procIdx = 0
+        lineIdx = 0
+        document.setBackground(0, Document.Background.Selected)
     }
 
     // Private methods
